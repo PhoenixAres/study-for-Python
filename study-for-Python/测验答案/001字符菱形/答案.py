@@ -1,0 +1,6 @@
+c = input()
+print(' '*2 + c)
+print(' ' + c*3)
+print(c*5)
+print(' ' + c*3)
+print(' '*2 + c)

@@ -1,0 +1,27 @@
+描述
+用户密码的格式是： 1） 以大写或小写字母开头 2) 至少要有8个字符，最长不限 3) 由字母、数字、下划线或 '-' 组成 输入若干字符串，判断是不是符合密码的条件。如果是，输出 yes 如果不是，输出 no
+
+import re
+// 在此处补充你的代码
+while True:
+    try:
+        s = input()
+        if re.match(m,s) != None:
+            print("yes")
+        else:
+            print("no")
+    except:
+        break
+
+输入
+若干行
+
+输出
+对每行输入，判断其是否符合密码格式，相应地输出 yes 或no
+
+样例输入
+abdc
+a223_b-cdef
+样例输出
+no
+yes
