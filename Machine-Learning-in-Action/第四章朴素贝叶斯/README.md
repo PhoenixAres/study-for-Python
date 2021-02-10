@@ -74,7 +74,7 @@ myVocabList = createVocabList(listOPosts)
 print(myVocabList)
 ```
 
-    ['park', 'how', 'take', 'quit', 'please', 'buying', 'flea', 'has', 'not', 'posting', 'dog', 'I', 'problems', 'maybe', 'food', 'dalmation', 'is', 'stop', 'worthless', 'licks', 'him', 'stupid', 'so', 'steak', 'mr', 'love', 'my', 'ate', 'cute', 'to', 'garbage', 'help']
+    ['help', 'problems', 'so', 'licks', 'is', 'posting', 'ate', 'him', 'buying', 'dalmation', 'food', 'garbage', 'to', 'park', 'quit', 'dog', 'has', 'stupid', 'not', 'worthless', 'steak', 'please', 'how', 'stop', 'my', 'mr', 'love', 'maybe', 'I', 'take', 'flea', 'cute']
     
 
 
@@ -82,7 +82,7 @@ print(myVocabList)
 print(setOfWords2Vec(myVocabList, listOPosts[0]))
 ```
 
-    [0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0]
     
 
 
@@ -90,7 +90,7 @@ print(setOfWords2Vec(myVocabList, listOPosts[0]))
 print(setOfWords2Vec(myVocabList, listOPosts[3]))
 ```
 
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     
 
 ## 4.2 训练算法：从词向量计算概率
@@ -155,13 +155,13 @@ p0V
 
 
 
-    array([0.        , 0.04166667, 0.        , 0.        , 0.04166667,
-           0.        , 0.04166667, 0.04166667, 0.        , 0.        ,
-           0.04166667, 0.04166667, 0.04166667, 0.        , 0.        ,
-           0.04166667, 0.04166667, 0.04166667, 0.        , 0.04166667,
-           0.08333333, 0.        , 0.04166667, 0.04166667, 0.04166667,
-           0.04166667, 0.125     , 0.04166667, 0.04166667, 0.04166667,
-           0.        , 0.04166667])
+    array([0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667,
+           0.        , 0.04166667, 0.08333333, 0.        , 0.04166667,
+           0.        , 0.        , 0.04166667, 0.        , 0.        ,
+           0.04166667, 0.04166667, 0.        , 0.        , 0.        ,
+           0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.125     ,
+           0.04166667, 0.04166667, 0.        , 0.04166667, 0.        ,
+           0.04166667, 0.04166667])
 
 
 
@@ -173,13 +173,13 @@ p1V
 
 
 
-    array([0.05263158, 0.        , 0.05263158, 0.05263158, 0.        ,
-           0.05263158, 0.        , 0.        , 0.05263158, 0.05263158,
-           0.10526316, 0.        , 0.        , 0.05263158, 0.05263158,
-           0.        , 0.        , 0.05263158, 0.10526316, 0.        ,
-           0.05263158, 0.15789474, 0.        , 0.        , 0.        ,
-           0.        , 0.        , 0.        , 0.        , 0.05263158,
-           0.05263158, 0.        ])
+    array([0.        , 0.        , 0.        , 0.        , 0.        ,
+           0.05263158, 0.        , 0.05263158, 0.05263158, 0.        ,
+           0.05263158, 0.05263158, 0.05263158, 0.05263158, 0.05263158,
+           0.10526316, 0.        , 0.15789474, 0.05263158, 0.10526316,
+           0.        , 0.        , 0.        , 0.05263158, 0.        ,
+           0.        , 0.        , 0.05263158, 0.        , 0.05263158,
+           0.        , 0.        ])
 
 
 
@@ -213,8 +213,8 @@ def trainNB0(trainMatrix, trainCategory):
     return p0Vect, p1Vect, pAbusive
 
 def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
-    p0 = vec2Classify@p0Vec + log(1.0 - pClass1)        #元素相乘
-    p1 = vec2Classify@p1Vec + log(pClass1)
+    p0 = dot(vec2Classify, p0Vec) + log(1.0 - pClass1)        #元素相乘
+    p1 = dot(vec2Classify, p1Vec) + log(pClass1)
     return 1 if p1 > p0 else 0
 
 def testingNB():
@@ -368,8 +368,10 @@ spamTest()
 spamTest()
 ```
 
+    classification error  ['home', 'based', 'business', 'opportunity', 'knocking', 'your', 'door', 'don抰', 'rude', 'and', 'let', 'this', 'chance', 'you', 'can', 'earn', 'great', 'income', 'and', 'find', 'your', 'financial', 'life', 'transformed', 'learn', 'more', 'here', 'your', 'success', 'work', 'from', 'home', 'finder', 'experts']
+    classification error  ['yay', 'you', 'both', 'doing', 'fine', 'working', 'mba', 'design', 'strategy', 'cca', 'top', 'art', 'school', 'new', 'program', 'focusing', 'more', 'right', 'brained', 'creative', 'and', 'strategic', 'approach', 'management', 'the', 'way', 'done', 'today']
     classification error  ['scifinance', 'now', 'automatically', 'generates', 'gpu', 'enabled', 'pricing', 'risk', 'model', 'source', 'code', 'that', 'runs', '300x', 'faster', 'than', 'serial', 'code', 'using', 'new', 'nvidia', 'fermi', 'class', 'tesla', 'series', 'gpu', 'scifinance', 'derivatives', 'pricing', 'and', 'risk', 'model', 'development', 'tool', 'that', 'automatically', 'generates', 'and', 'gpu', 'enabled', 'source', 'code', 'from', 'concise', 'high', 'level', 'model', 'specifications', 'parallel', 'computing', 'cuda', 'programming', 'expertise', 'required', 'scifinance', 'automatic', 'gpu', 'enabled', 'monte', 'carlo', 'pricing', 'model', 'source', 'code', 'generation', 'capabilities', 'have', 'been', 'significantly', 'extended', 'the', 'latest', 'release', 'this', 'includes']
-    the error rate is:  0.1
+    the error rate is:  0.3
     
 
 
@@ -377,7 +379,7 @@ spamTest()
 spamTest()
 ```
 
-    classification error  ['benoit', 'mandelbrot', '1924', '2010', 'benoit', 'mandelbrot', '1924', '2010', 'wilmott', 'team', 'benoit', 'mandelbrot', 'the', 'mathematician', 'the', 'father', 'fractal', 'mathematics', 'and', 'advocate', 'more', 'sophisticated', 'modelling', 'quantitative', 'finance', 'died', '14th', 'october', '2010', 'aged', 'wilmott', 'magazine', 'has', 'often', 'featured', 'mandelbrot', 'his', 'ideas', 'and', 'the', 'work', 'others', 'inspired', 'his', 'fundamental', 'insights', 'you', 'must', 'logged', 'view', 'these', 'articles', 'from', 'past', 'issues', 'wilmott', 'magazine']
-    classification error  ['yay', 'you', 'both', 'doing', 'fine', 'working', 'mba', 'design', 'strategy', 'cca', 'top', 'art', 'school', 'new', 'program', 'focusing', 'more', 'right', 'brained', 'creative', 'and', 'strategic', 'approach', 'management', 'the', 'way', 'done', 'today']
+    classification error  ['oem', 'adobe', 'microsoft', 'softwares', 'fast', 'order', 'and', 'download', 'microsoft', 'office', 'professional', 'plus', '2007', '2010', '129', 'microsoft', 'windows', 'ultimate', '119', 'adobe', 'photoshop', 'cs5', 'extended', 'adobe', 'acrobat', 'pro', 'extended', 'windows', 'professional', 'thousand', 'more', 'titles']
+    classification error  ['home', 'based', 'business', 'opportunity', 'knocking', 'your', 'door', 'don抰', 'rude', 'and', 'let', 'this', 'chance', 'you', 'can', 'earn', 'great', 'income', 'and', 'find', 'your', 'financial', 'life', 'transformed', 'learn', 'more', 'here', 'your', 'success', 'work', 'from', 'home', 'finder', 'experts']
     the error rate is:  0.2
     

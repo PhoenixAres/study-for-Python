@@ -53,8 +53,8 @@ def trainNB0(trainMatrix, trainCategory):
     return p0Vect, p1Vect, pAbusive
 
 def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
-    p0 = vec2Classify@p0Vec + log(1.0 - pClass1)
-    p1 = vec2Classify@p1Vec + log(pClass1)
+    p0 = dot(vec2Classify, p0Vec) + log(1.0 - pClass1)
+    p1 = dot(vec2Classify, p1Vec) + log(pClass1)
     return 1 if p1 > p0 else 0
 
 def testingNB():
