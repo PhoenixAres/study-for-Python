@@ -1,5 +1,4 @@
 from numpy import *
-from os import listdir
 
 def loadDataSet(filename):
     dataMat = []
@@ -8,7 +7,7 @@ def loadDataSet(filename):
         for line in fr.readlines():
             lineArr = line.strip().split('\t')
             dataMat.append([float(lineArr[0]), float(lineArr[1])])
-            labelMat.append(float(lineArr[2]))
+            labelMat.append([float(lineArr[2])])
     return dataMat, labelMat
 
 def selectJrand(i, m):
@@ -23,22 +22,22 @@ def clipAlpha(aj, H, L):
     return aj
 
 def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
-    dataMatrix = mat(dataMatIn)
-    labelMat = mat(classLabels).T
+    dataMatrix = array(dataMatIn)
+    labelMat = array(classLabels)
     b = 0
     m, n = shape(dataMatrix)
-    alphas = mat(zeros((m, 1)))
+    alphas = zeros((m, 1))
     iter = 0
     while iter < maxIter:
         alphaPairsChanged = 0
         for i in range(m):
-            fXi = float(multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[i, :].T)) + b
-            Ei = fXi - float(labelMat[i])
-            if labelMat[i] * Ei < -toler and alphas[i] < C or labelMat[i] * Ei > toler and alphas[i] > 0:
+            fXi = dot((alphas * labelMat).T, dot(dataMatrix, dataMatrix[i, :])) + b
+            Ei = fXi - labelMat[i]
+            if (labelMat[i] * Ei < -toler and alphas[i] < C) or (labelMat[i] * Ei > toler and alphas[i] > 0):
                                                                  #如果alpha可以更改进入优化过程
                 j = selectJrand(i, m)                            #随机选择第二个alpha
-                fXj = float(multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[j, :].T)) + b
-                Ej = fXj - float(labelMat[j])
+                fXj = dot((alphas * labelMat).T, dot(dataMatrix, dataMatrix[j, :])) + b
+                Ej = fXj - labelMat[j]
                 alphaIold = alphas[i].copy()
                 alphaJold = alphas[j].copy()
                 if labelMat[i] != labelMat[j]:                   #保证alpha在0与C之间
@@ -50,9 +49,9 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                 if L == H:
                     print('L == H')
                     continue
-                eta = 2.0 * dataMatrix[i, :] * dataMatrix[j, :].T - \
-                            dataMatrix[i, :] * dataMatrix[i, :].T - \
-                            dataMatrix[j, :] * dataMatrix[j, :].T
+                eta = 2.0 * dot(dataMatrix[i, :], dataMatrix[j, :]) - \
+                            dot(dataMatrix[i, :], dataMatrix[i, :]) - \
+                            dot(dataMatrix[j, :], dataMatrix[j, :])
                 if eta >= 0:
                     print('eta >= 0')
                     continue
@@ -62,10 +61,10 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                     print('j not moving enough')
                     continue
                 alphas[i] += labelMat[j] * labelMat[i] * (alphaJold - alphas[j])   #对i进行修改，修改量与j相同，但方向相反
-                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[i, :].T - \
-                              labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[i, :] * dataMatrix[j, :].T
-                b2 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[j, :].T - \
-                              labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[j, :] * dataMatrix[j, :].T
+                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dot(dataMatrix[i, :], dataMatrix[i, :]) - \
+                              labelMat[j] * (alphas[j] - alphaJold) * dot(dataMatrix[i, :], dataMatrix[j, :])
+                b2 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dot(dataMatrix[i, :], dataMatrix[j, :]) - \
+                              labelMat[j] * (alphas[j] - alphaJold) * dot(dataMatrix[j, :], dataMatrix[j, :])
                 if 0 < alphas[i] < C:
                     b = b1
                 elif 0 < alphas[j] < C:               #设置常数项
@@ -82,22 +81,19 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
     return b, alphas
 
 class optStruct:
-    def __init__(self, dataMatIn, classLabels, C, toler, kTup):
+    def __init__(self, dataMatIn, classLabels, C, toler):
         self.X = dataMatIn
         self.labelMat = classLabels
         self.C = C
         self.tol = toler
         self.m = shape(dataMatIn)[0]
-        self.alphas = mat(zeros((self.m, 1)))
+        self.alphas = zeros((self.m, 1))
         self.b = 0
-        self.eCache = mat(zeros((self.m, 2)))        #误差缓存
-        self.K = mat(zeros((self.m, self.m)))
-        for i in range(self.m):
-            self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
+        self.eCache = zeros((self.m, 2))        #误差缓存
 
 def calcEk(oS, k):
-    fXk = float(multiply(oS.alphas, oS.labelMat).T * oS.K[:, k] + oS.b)
-    Ek = fXk - float(oS.labelMat[k])
+    fXk = dot((oS.alphas * oS.labelMat).T, dot(oS.X, oS.X[k, :])) + oS.b
+    Ek = fXk - oS.labelMat[k]
     return Ek
 
 def selectJ(i, oS, Ei):           #内循环中的启发式方法
@@ -105,7 +101,7 @@ def selectJ(i, oS, Ei):           #内循环中的启发式方法
     maxDeltaE = 0
     Ej = 0
     oS.eCache[i] = [1, Ei]
-    validEcacheList = nonzero(oS.eCache[:, 0].A)[0]
+    validEcacheList = nonzero(oS.eCache[:, 0])[0]
     if len(validEcacheList) > 1:
         for k in validEcacheList:
             if k == i:
@@ -141,7 +137,9 @@ def innerL(i, oS):
         if L == H:
             print('L == H')
             return 0
-        eta = 2.0 * oS.K[i, j] - oS.K[i, i] - oS.K[j, j]
+        eta = 2.0 * dot(oS.X[i, :], oS.X[j, :]) - \
+                    dot(oS.X[i, :], oS.X[i, :]) - \
+                    dot(oS.X[j, :], oS.X[j, :])
         if eta >= 0:
             print('eta >= 0')
             return 0
@@ -153,10 +151,10 @@ def innerL(i, oS):
             return 0
         oS.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJold - oS.alphas[j])
         updateEk(oS, i)                           #更新误差缓存
-        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.K[i, i] - \
-                         oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.K[i, j]
-        b2 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.K[i, j] - \
-                         oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.K[j, j]
+        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * dot(oS.X[i, :], oS.X[i, :]) - \
+                         oS.labelMat[j] * (oS.alphas[j] - alphaJold) * dot(oS.X[i, :], oS.X[j, :])
+        b2 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * dot(oS.X[i, :], oS.X[j, :]) - \
+                         oS.labelMat[j] * (oS.alphas[j] - alphaJold) * dot(oS.X[j, :], oS.X[j, :])
         if 0 < oS.alphas[i] < oS.C:
             oS.b = b1
         elif 0 < oS.alphas[j] < oS.C:  # 设置常数项
@@ -167,8 +165,8 @@ def innerL(i, oS):
     else:
         return 0
 
-def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
-    oS = optStruct(mat(dataMatIn), mat(classLabels).T, C, toler, kTup)
+def smoP(dataMatIn, classLabels, C, toler, maxIter):
+    oS = optStruct(array(dataMatIn), array(classLabels), C, toler)
     iter = 0
     entireSet = True
     alphaPairsChanged = 0
@@ -180,7 +178,7 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
                 print('fullSet, iter: %d i: %d, pairs changed %d' % (iter, i, alphaPairsChanged))
             iter += 1
         else:                         #遍历非边界值
-            nonBoundIs = nonzero((oS.alphas.A > 0) * (oS.alphas.A < C))[0]
+            nonBoundIs = nonzero((oS.alphas > 0) * (oS.alphas < C))[0]
             for i in nonBoundIs:
                 alphaPairsChanged += innerL(i, oS)
                 print('non-bound, iter: %d i: %d, pairs changed %d' % (iter, i, alphaPairsChanged))
@@ -193,107 +191,10 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
     return oS.b, oS.alphas
 
 def calcWs(alphas, dataArr, classLabels):
-    X = mat(dataArr)
-    labelMat = mat(classLabels).T
+    X = array(dataArr)
+    labelMat = array(classLabels)
     m, n = shape(X)
     w = zeros((n, 1))
     for i in range(m):
-        w += multiply(alphas[i] * labelMat[i], X[i, :].T)
+        w += alphas[i] * labelMat[i] * array([X[i, :]]).T
     return w
-
-def kernelTrans(X, A, kTup):
-    m, n = shape(X)
-    K = mat(zeros((m, 1)))
-    if kTup[0] == 'lin':
-        K = X * A.T
-    elif kTup[0] == 'rbf':
-        for j in range(m):
-            deltaRow = X[j, :] - A
-            K[j] = deltaRow * deltaRow.T
-        K = exp(K / (-1 * kTup[1]**2))     #元素间的除法
-    else:
-        raise NameError('Houston we Have a Problem -- That Kernel is not recognized')
-    return K
-
-def testRbf(k1 = 1.3):
-    dataArr, labelArr = loadDataSet('testSetRBF.txt')
-    b, alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1))
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
-    svInd = nonzero(alphas.A > 0)[0]
-    sVs = datMat[svInd]                 #构建支持向量矩阵
-    labelSV = labelMat[svInd]
-    print('there are %d Support Vectors' % shape(sVs)[0])
-    m, n = shape(datMat)
-    errorCount = 0
-    for i in range(m):
-        kernelEval = kernelTrans(sVs, datMat[i, :], ('rbf', k1))
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
-        if sign(predict) != sign(labelArr[i]):
-            errorCount += 1
-    print('the training error rate is: %f' % (float(errorCount) / m))
-    dataArr, labelArr = loadDataSet('testSetRBF2.txt')
-    errorCount = 0
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
-    m, n = shape(datMat)
-    for i in range(m):
-        kernelEval = kernelTrans(sVs, datMat[i, :], ('rbf', k1))
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
-        if sign(predict) != sign(labelArr[i]):
-            errorCount += 1
-    print('the test error rate is: %f' % (float(errorCount) / m))
-
-def img2vector(filename):
-    returnVect = zeros((1, 1024))
-    with open(filename) as fp:
-        for i in range(32):
-            lineStr = fp.readline()
-            for j in range(32):
-                returnVect[0, 32*i+j] = int(lineStr[j])
-        return returnVect
-
-def loadImages(dirName):
-    hwLabels = []
-    trainingFileList = listdir(dirName)
-    m = len(trainingFileList)
-    trainingMat = zeros((m, 1024))
-    for i in range(m):
-        fileNameStr = trainingFileList[i]
-        fileStr = fileNameStr.split('.')[0]
-        classNumStr = int(fileStr.split('_')[0])
-        if classNumStr == 9:
-            hwLabels.append(-1)
-        else:
-            hwLabels.append(1)
-        trainingMat[i, :] = img2vector('%s/%s' % (dirName, fileNameStr))
-    return trainingMat, hwLabels
-
-def testDigits(kTup = ('rbf', 10)):
-    dataArr, labelArr = loadImages('trainingDigits')
-    b, alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, kTup)
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
-    svInd = nonzero(alphas.A > 0)[0]
-    sVs = datMat[svInd]
-    labelSV = labelMat[svInd]
-    print('there are %d Support Vectors' % shape(sVs)[0])
-    m, n = shape(datMat)
-    errorCount = 0
-    for i in range(m):
-        kernelEval = kernelTrans(sVs, datMat[i, :], kTup)
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
-        if sign(predict) != sign(labelArr[i]):
-            errorCount += 1
-    print('the training error rate is %f' % (float(errorCount) / m))
-    dataArr, labelArr = loadImages('testDigits')
-    errorCount = 0
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
-    m, n = shape(datMat)
-    for i in range(m):
-        kernelEval = kernelTrans(sVs, datMat[i, :], kTup)
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
-        if sign(predict) != sign(labelArr[i]):
-            errorCount += 1
-    print('the test error rate is %f' % (float(errorCount) / m))

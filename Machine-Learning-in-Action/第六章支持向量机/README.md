@@ -125,7 +125,7 @@ def loadDataSet(filename):
         for line in fr.readlines():
             lineArr = line.strip().split('\t')
             dataMat.append([float(lineArr[0]), float(lineArr[1])])
-            labelMat.append(float(lineArr[2]))
+            labelMat.append([float(lineArr[2])])
     return dataMat, labelMat
 
 def selectJrand(i, m):
@@ -143,7 +143,7 @@ dataArr, labelArr = loadDataSet('testSet.txt')
 print(labelArr)
 ```
 
-    [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]
+    [[-1.0], [-1.0], [1.0], [-1.0], [1.0], [1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [1.0], [-1.0], [1.0], [1.0], [-1.0], [1.0], [-1.0], [-1.0], [-1.0], [1.0], [-1.0], [-1.0], [1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [1.0], [1.0], [1.0], [1.0], [-1.0], [1.0], [-1.0], [-1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [-1.0], [1.0], [1.0], [-1.0], [-1.0], [1.0], [1.0], [-1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [1.0], [-1.0], [1.0], [-1.0], [-1.0], [1.0], [1.0], [1.0], [-1.0], [1.0], [1.0], [-1.0], [-1.0], [1.0], [-1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [1.0], [-1.0], [1.0], [1.0], [1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0]]
     
 
 SMO函数的伪代码大致如下：
@@ -160,22 +160,22 @@ SMO函数的伪代码大致如下：
 
 ```python
 def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
-    dataMatrix = mat(dataMatIn)
-    labelMat = mat(classLabels).T
+    dataMatrix = array(dataMatIn)
+    labelMat = array(classLabels)
     b = 0
     m, n = shape(dataMatrix)
-    alphas = mat(zeros((m, 1)))
+    alphas = zeros((m, 1))
     iter = 0
     while iter < maxIter:
         alphaPairsChanged = 0
         for i in range(m):
-            fXi = float(multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[i, :].T)) + b
-            Ei = fXi - float(labelMat[i])
-            if labelMat[i] * Ei < -toler and alphas[i] < C or labelMat[i] * Ei > toler and alphas[i] > 0:
+            fXi = dot((alphas * labelMat).T, dot(dataMatrix, dataMatrix[i, :])) + b
+            Ei = fXi - labelMat[i]
+            if (labelMat[i] * Ei < -toler and alphas[i] < C) or (labelMat[i] * Ei > toler and alphas[i] > 0):
                                                                  #如果alpha可以更改进入优化过程
                 j = selectJrand(i, m)                            #随机选择第二个alpha
-                fXj = float(multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[j, :].T)) + b
-                Ej = fXj - float(labelMat[j])
+                fXj = dot((alphas * labelMat).T, dot(dataMatrix, dataMatrix[j, :])) + b
+                Ej = fXj - labelMat[j]
                 alphaIold = alphas[i].copy()
                 alphaJold = alphas[j].copy()
                 if labelMat[i] != labelMat[j]:                   #保证alpha在0与C之间
@@ -187,9 +187,9 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                 if L == H:
                     print('L == H')
                     continue
-                eta = 2.0 * dataMatrix[i, :] * dataMatrix[j, :].T - \
-                            dataMatrix[i, :] * dataMatrix[i, :].T - \
-                            dataMatrix[j, :] * dataMatrix[j, :].T
+                eta = 2.0 * dot(dataMatrix[i, :], dataMatrix[j, :]) - \
+                            dot(dataMatrix[i, :], dataMatrix[i, :]) - \
+                            dot(dataMatrix[j, :], dataMatrix[j, :])
                 if eta >= 0:
                     print('eta >= 0')
                     continue
@@ -199,10 +199,10 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                     print('j not moving enough')
                     continue
                 alphas[i] += labelMat[j] * labelMat[i] * (alphaJold - alphas[j])   #对i进行修改，修改量与j相同，但方向相反
-                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[i, :].T - \
-                              labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[i, :] * dataMatrix[j, :].T
-                b2 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i, :] * dataMatrix[j, :].T - \
-                              labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[j, :] * dataMatrix[j, :].T
+                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dot(dataMatrix[i, :], dataMatrix[i, :]) - \
+                              labelMat[j] * (alphas[j] - alphaJold) * dot(dataMatrix[i, :], dataMatrix[j, :])
+                b2 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dot(dataMatrix[i, :], dataMatrix[j, :]) - \
+                              labelMat[j] * (alphas[j] - alphaJold) * dot(dataMatrix[j, :], dataMatrix[j, :])
                 if 0 < alphas[i] < C:
                     b = b1
                 elif 0 < alphas[j] < C:               #设置常数项
@@ -218,316 +218,145 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
         print('iteration number: %d' % iter)
     return b, alphas
 
-
 b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
 ```
 
-    iter: 0 i: 0, pairs changed 1
-    L == H
-    j not moving enough
     L == H
     L == H
+    iter: 0 i: 2, pairs changed 1
     L == H
-    j not moving enough
-    j not moving enough
+    iter: 0 i: 4, pairs changed 2
     L == H
     L == H
     L == H
-    iter: 0 i: 69, pairs changed 2
-    L == H
-    j not moving enough
+    iter: 0 i: 10, pairs changed 3
     L == H
     j not moving enough
     L == H
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 0 i: 52, pairs changed 4
+    iter: 0 i: 54, pairs changed 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
     L == H
     L == H
+    L == H
+    L == H
+    j not moving enough
     j not moving enough
     iteration number: 0
-    j not moving enough
     L == H
     L == H
-    L == H
-    L == H
+    iter: 0 i: 2, pairs changed 1
     L == H
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     L == H
-    L == H
-    j not moving enough
-    j not moving enough
-    L == H
-    iter: 0 i: 30, pairs changed 1
-    j not moving enough
-    L == H
-    iter: 0 i: 52, pairs changed 2
-    L == H
-    iter: 0 i: 55, pairs changed 3
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    L == H
-    L == H
-    iteration number: 0
-    j not moving enough
-    L == H
-    L == H
-    L == H
-    L == H
-    L == H
-    L == H
-    j not moving enough
+    iter: 0 i: 7, pairs changed 2
+    iter: 0 i: 8, pairs changed 3
     j not moving enough
     j not moving enough
     L == H
     j not moving enough
-    j not moving enough
+    L == H
     j not moving enough
     L == H
     j not moving enough
-    j not moving enough
     L == H
     L == H
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    iter: 0 i: 69, pairs changed 1
-    iteration number: 0
+    iter: 0 i: 43, pairs changed 4
     j not moving enough
     j not moving enough
     j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 55, pairs changed 1
-    j not moving enough
-    L == H
+    iter: 0 i: 55, pairs changed 5
     j not moving enough
     iteration number: 0
     j not moving enough
     j not moving enough
-    L == H
-    L == H
+    iter: 0 i: 5, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
     L == H
     j not moving enough
+    iter: 0 i: 43, pairs changed 2
+    L == H
     j not moving enough
-    iter: 0 i: 37, pairs changed 1
     L == H
     j not moving enough
     j not moving enough
-    j not moving enough
     L == H
-    L == H
-    L == H
-    L == H
-    j not moving enough
-    j not moving enough
     L == H
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 0 i: 96, pairs changed 2
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    L == H
+    j not moving enough
+    L == H
     L == H
     iteration number: 0
     j not moving enough
     L == H
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
+    L == H
     j not moving enough
     L == H
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 69, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 96, pairs changed 1
-    L == H
-    iteration number: 0
-    iter: 0 i: 0, pairs changed 1
-    j not moving enough
+    iter: 0 i: 10, pairs changed 1
     L == H
     j not moving enough
     j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    iter: 1 i: 30, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 1 i: 87, pairs changed 2
-    L == H
-    j not moving enough
-    j not moving enough
-    L == H
-    iteration number: 0
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    iter: 0 i: 24, pairs changed 1
     iter: 0 i: 26, pairs changed 2
     j not moving enough
-    iter: 0 i: 34, pairs changed 3
     L == H
-    L == H
+    j not moving enough
+    iter: 0 i: 54, pairs changed 3
+    iter: 0 i: 55, pairs changed 4
+    iter: 0 i: 62, pairs changed 5
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    iter: 0 i: 2, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 6, pairs changed 2
+    j not moving enough
+    iter: 0 i: 10, pairs changed 3
+    iter: 0 i: 17, pairs changed 4
     j not moving enough
     j not moving enough
     j not moving enough
-    L == H
-    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
+    iter: 0 i: 4, pairs changed 1
     L == H
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     L == H
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 54, pairs changed 1
-    iter: 0 i: 55, pairs changed 2
-    iter: 0 i: 69, pairs changed 3
-    iteration number: 0
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    iter: 0 i: 23, pairs changed 1
-    iter: 0 i: 24, pairs changed 2
-    iter: 0 i: 27, pairs changed 3
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    iter: 0 i: 96, pairs changed 4
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    L == H
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    iter: 0 i: 97, pairs changed 1
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 8, pairs changed 1
-    j not moving enough
-    j not moving enough
     iter: 0 i: 17, pairs changed 2
     j not moving enough
     j not moving enough
@@ -535,14 +364,45 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 0 i: 51, pairs changed 3
+    iter: 0 i: 52, pairs changed 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 18, pairs changed 1
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 0 i: 52, pairs changed 2
+    iter: 0 i: 54, pairs changed 3
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    iter: 0 i: 10, pairs changed 1
+    iter: 0 i: 17, pairs changed 2
+    L == H
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 55, pairs changed 3
+    j not moving enough
+    j not moving enough
+    L == H
     j not moving enough
     j not moving enough
     iteration number: 0
@@ -552,78 +412,15 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 54, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
+    L == H
     L == H
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 96, pairs changed 1
-    j not moving enough
-    iteration number: 0
+    L == H
     L == H
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
     j not moving enough
     iteration number: 1
     L == H
@@ -631,18 +428,95 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 1 i: 26, pairs changed 1
     j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 46, pairs changed 1
+    j not moving enough
+    iter: 0 i: 54, pairs changed 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     L == H
-    iter: 1 i: 30, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    iteration number: 1
+    iter: 1 i: 8, pairs changed 1
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    iter: 1 i: 17, pairs changed 1
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 30, pairs changed 1
+    j not moving enough
+    iter: 0 i: 52, pairs changed 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    iter: 1 i: 8, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
@@ -662,6 +536,109 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    iter: 1 i: 17, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    iter: 0 i: 54, pairs changed 1
+    j not moving enough
+    iter: 0 i: 69, pairs changed 2
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 54, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 1 i: 30, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 52, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 1 i: 55, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iter: 1 i: 96, pairs changed 2
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
     L == H
     j not moving enough
     j not moving enough
@@ -671,7 +648,118 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 0 i: 69, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    L == H
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 5 i: 54, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    iter: 1 i: 23, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -687,39 +775,18 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
+    iter: 0 i: 55, pairs changed 2
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
+    iter: 0 i: 97, pairs changed 3
     iteration number: 0
     j not moving enough
     j not moving enough
     j not moving enough
+    L == H
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 55, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
     L == H
     j not moving enough
     j not moving enough
@@ -731,33 +798,11 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    L == H
     iteration number: 1
+    L == H
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
+    L == H
+    L == H
     j not moving enough
     j not moving enough
     j not moving enough
@@ -774,8 +819,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     iteration number: 2
     L == H
     j not moving enough
-    iter: 2 i: 8, pairs changed 1
-    iter: 2 i: 10, pairs changed 2
+    L == H
     j not moving enough
     j not moving enough
     j not moving enough
@@ -788,271 +832,57 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 2 i: 54, pairs changed 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
     L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 24, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 23, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    iter: 2 i: 10, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 24, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    iter: 0 i: 8, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 57, pairs changed 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 23, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 54, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     iteration number: 3
+    L == H
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    L == H
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 3 i: 23, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    L == H
+    iteration number: 4
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    j not moving enough
+    L == H
+    j not moving enough
+    iter: 5 i: 54, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1072,17 +902,15 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 1
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 1 i: 23, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 1 i: 29, pairs changed 1
-    j not moving enough
+    iter: 1 i: 52, pairs changed 2
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1139,115 +967,9 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 3 i: 17, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    iter: 3 i: 52, pairs changed 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    L == H
-    j not moving enough
-    iter: 3 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1266,186 +988,26 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
     iteration number: 5
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 5 i: 17, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    iteration number: 6
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 19 i: 52, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1454,16 +1016,24 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     iteration number: 0
     j not moving enough
     j not moving enough
+    iter: 0 i: 8, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 0 i: 55, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 0
+    j not moving enough
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1493,9 +1063,68 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     iteration number: 2
     j not moving enough
     j not moving enough
-    iter: 2 i: 17, pairs changed 1
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 6 i: 29, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1516,36 +1145,12 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 1 i: 54, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 1
-    j not moving enough
     j not moving enough
     j not moving enough
     iter: 1 i: 17, pairs changed 1
@@ -1559,7 +1164,34 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
     iteration number: 0
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 23, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 0 i: 52, pairs changed 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1586,7 +1218,11 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
     iteration number: 2
+    j not moving enough
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1628,10 +1264,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
     iteration number: 5
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1658,111 +1291,13 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 7
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    iter: 13 i: 23, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
+    iter: 7 i: 29, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1773,6 +1308,16 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 0 i: 23, pairs changed 1
+    j not moving enough
+    iter: 0 i: 29, pairs changed 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1793,68 +1338,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 2 i: 52, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1876,76 +1360,111 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iteration number: 4
     j not moving enough
     j not moving enough
-    iter: 3 i: 54, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 10
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 11
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 12
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 13
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 13 i: 55, pairs changed 1
     j not moving enough
     j not moving enough
     iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 55, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 29, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 55, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -1955,6 +1474,118 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     iteration number: 1
     j not moving enough
     j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    iter: 9 i: 52, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    iter: 4 i: 29, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 2 i: 54, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
     j not moving enough
     L == H
     j not moving enough
@@ -1962,56 +1593,16 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iteration number: 1
+    iter: 1 i: 17, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 1 i: 54, pairs changed 2
     j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 4 i: 52, pairs changed 1
-    j not moving enough
-    iter: 4 i: 55, pairs changed 2
     j not moving enough
     j not moving enough
     iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -2025,15 +1616,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -2047,15 +1630,69 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iteration number: 4
+    iter: 4 i: 29, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iter: 3 i: 55, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -2067,14 +1704,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -2086,912 +1716,17 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 8
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 9
+    iter: 9 i: 17, pairs changed 1
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 21
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 21 i: 54, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 52, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 5 i: 54, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 6 i: 55, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 5 i: 54, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 20 i: 55, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 20 i: 52, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 3 i: 29, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 6 i: 52, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    iter: 1 i: 55, pairs changed 1
     j not moving enough
     j not moving enough
     iteration number: 0
@@ -3059,24 +1794,21 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
     iteration number: 11
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 12
     j not moving enough
-    iter: 12 i: 29, pairs changed 1
+    j not moving enough
+    iter: 12 i: 54, pairs changed 1
     j not moving enough
     j not moving enough
     iteration number: 0
     j not moving enough
-    iter: 0 i: 23, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 55, pairs changed 2
-    iteration number: 0
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3086,12 +1818,15 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
     iteration number: 2
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
     iteration number: 3
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3101,19 +1836,46 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
     iteration number: 5
     j not moving enough
     j not moving enough
     j not moving enough
-    iter: 5 i: 54, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 10
+    j not moving enough
+    j not moving enough
+    iter: 10 i: 52, pairs changed 1
+    j not moving enough
+    j not moving enough
     j not moving enough
     iteration number: 0
     j not moving enough
-    j not moving enough
-    iter: 0 i: 29, pairs changed 1
-    j not moving enough
-    j not moving enough
-    iteration number: 0
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3123,43 +1885,15 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    iter: 5 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     iteration number: 2
     j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
+    j not moving enough
     iteration number: 3
+    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3180,7 +1914,49 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     iteration number: 7
+    iter: 7 i: 29, pairs changed 1
     j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    iter: 0 i: 17, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3188,9 +1964,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
     iteration number: 9
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3198,49 +1972,17 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
     iteration number: 11
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 12
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    iter: 18 i: 52, pairs changed 1
+    iter: 12 i: 52, pairs changed 1
     j not moving enough
     j not moving enough
     iteration number: 0
+    j not moving enough
     j not moving enough
     j not moving enough
     iter: 0 i: 54, pairs changed 1
@@ -3248,127 +1990,49 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     iteration number: 0
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 1
     j not moving enough
     j not moving enough
+    iteration number: 2
+    iter: 2 i: 17, pairs changed 1
     j not moving enough
-    iter: 1 i: 55, pairs changed 1
+    j not moving enough
     iteration number: 0
     j not moving enough
     j not moving enough
+    iteration number: 1
+    iter: 1 i: 54, pairs changed 1
+    j not moving enough
+    iteration number: 0
     j not moving enough
     j not moving enough
     iteration number: 1
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 2
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 3
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 4
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 5
     j not moving enough
     j not moving enough
+    iteration number: 6
     j not moving enough
-    iter: 5 i: 54, pairs changed 1
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    iter: 8 i: 55, pairs changed 1
     iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 4 i: 52, pairs changed 1
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    iter: 0 i: 23, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
     L == H
     j not moving enough
-    iter: 0 i: 55, pairs changed 1
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    iter: 1 i: 23, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 4 i: 55, pairs changed 1
-    iteration number: 0
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 1
@@ -3380,19 +2044,30 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iter: 2 i: 52, pairs changed 1
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
     j not moving enough
     iteration number: 3
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
     iteration number: 4
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 5
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3400,9 +2075,7 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
     iteration number: 7
-    j not moving enough
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3410,9 +2083,183 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iteration number: 9
+    j not moving enough
+    iter: 9 i: 29, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    iter: 4 i: 54, pairs changed 1
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    iter: 3 i: 55, pairs changed 1
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    iter: 2 i: 17, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
     j not moving enough
     iteration number: 9
     j not moving enough
+    j not moving enough
+    iter: 9 i: 55, pairs changed 1
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    iter: 6 i: 29, pairs changed 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    iter: 3 i: 55, pairs changed 1
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
     j not moving enough
     j not moving enough
     iter: 9 i: 54, pairs changed 1
@@ -3421,9 +2268,15 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
-    j not moving enough
     iteration number: 1
     j not moving enough
+    j not moving enough
+    iter: 1 i: 55, pairs changed 1
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
     j not moving enough
     j not moving enough
     j not moving enough
@@ -3431,11 +2284,79 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    iter: 7 i: 54, pairs changed 1
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    iter: 2 i: 52, pairs changed 1
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
     j not moving enough
     iteration number: 3
     j not moving enough
     j not moving enough
-    iter: 3 i: 29, pairs changed 1
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    iter: 9 i: 17, pairs changed 1
+    j not moving enough
+    iter: 9 i: 52, pairs changed 2
     j not moving enough
     iteration number: 0
     j not moving enough
@@ -3498,1729 +2419,328 @@ b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
     j not moving enough
     j not moving enough
     iteration number: 15
+    iter: 15 i: 17, pairs changed 1
     j not moving enough
     j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    iter: 1 i: 55, pairs changed 1
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    iter: 9 i: 29, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 10
+    j not moving enough
+    j not moving enough
+    j not moving enough
+    iteration number: 11
+    j not moving enough
+    j not moving enough
+    iter: 11 i: 55, pairs changed 1
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    iteration number: 10
+    j not moving enough
+    j not moving enough
+    iteration number: 11
+    j not moving enough
+    j not moving enough
+    iteration number: 12
+    j not moving enough
+    j not moving enough
+    iteration number: 13
+    j not moving enough
+    j not moving enough
+    iteration number: 14
+    j not moving enough
+    j not moving enough
+    iteration number: 15
     j not moving enough
     j not moving enough
     iteration number: 16
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 17
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 18
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 19
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 20
     j not moving enough
     j not moving enough
+    iteration number: 21
+    iter: 21 i: 29, pairs changed 1
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    iteration number: 10
+    j not moving enough
+    j not moving enough
+    iteration number: 11
+    iter: 11 i: 17, pairs changed 1
+    j not moving enough
+    j not moving enough
+    iteration number: 0
+    j not moving enough
+    j not moving enough
+    iteration number: 1
+    j not moving enough
+    j not moving enough
+    iteration number: 2
+    j not moving enough
+    j not moving enough
+    iteration number: 3
+    j not moving enough
+    j not moving enough
+    iteration number: 4
+    j not moving enough
+    j not moving enough
+    iteration number: 5
+    j not moving enough
+    j not moving enough
+    iteration number: 6
+    j not moving enough
+    j not moving enough
+    iteration number: 7
+    j not moving enough
+    j not moving enough
+    iteration number: 8
+    j not moving enough
+    j not moving enough
+    iteration number: 9
+    j not moving enough
+    j not moving enough
+    iteration number: 10
+    j not moving enough
+    j not moving enough
+    iteration number: 11
+    j not moving enough
+    j not moving enough
+    iteration number: 12
+    j not moving enough
+    j not moving enough
+    iteration number: 13
+    j not moving enough
+    j not moving enough
+    iteration number: 14
+    j not moving enough
+    j not moving enough
+    iteration number: 15
+    j not moving enough
+    j not moving enough
+    iteration number: 16
+    j not moving enough
+    j not moving enough
+    iteration number: 17
+    j not moving enough
+    j not moving enough
+    iteration number: 18
+    j not moving enough
+    j not moving enough
+    iteration number: 19
+    j not moving enough
+    j not moving enough
+    iteration number: 20
     j not moving enough
     j not moving enough
     iteration number: 21
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 22
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 23
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 24
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 25
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 26
-    iter: 26 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    iter: 17 i: 29, pairs changed 1
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    iter: 10 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    iter: 19 i: 54, pairs changed 1
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    iter: 7 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    iter: 20 i: 54, pairs changed 1
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    L == H
-    iter: 16 i: 55, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 21
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 22
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 23
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 24
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 25
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 26
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 27
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 28
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 29
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 30
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 31
-    j not moving enough
-    iter: 31 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 9 i: 55, pairs changed 1
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 21
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 22
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 23
-    j not moving enough
-    j not moving enough
-    iter: 23 i: 17, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 0 i: 54, pairs changed 1
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iter: 5 i: 29, pairs changed 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 0
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 1
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 2
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 3
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 4
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 5
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 6
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 7
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 8
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 9
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 10
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 11
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 12
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 13
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 14
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 15
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 16
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 17
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 18
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 19
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 20
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 21
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 22
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 23
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 24
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 25
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 26
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 27
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 28
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 29
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 30
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    iteration number: 31
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 32
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 33
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 34
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 35
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 36
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 37
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 38
     j not moving enough
     j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     iteration number: 39
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
-    j not moving enough
     j not moving enough
     j not moving enough
     iteration number: 40
@@ -5234,7 +2754,7 @@ b
 
 
 
-    matrix([[-3.84848578]])
+    array([-3.83146162])
 
 
 
@@ -5246,9 +2766,7 @@ alphas[alphas > 0]
 
 
 
-    matrix([[1.08420217e-16, 4.72712147e-17, 1.27867992e-01, 2.36356074e-17,
-             2.36356074e-17, 2.42270373e-01, 1.08420217e-16, 2.02962647e-16,
-             2.36356074e-17, 3.70135180e-01]])
+    array([0.09826554, 0.26761611, 0.03690621, 0.32897544])
 
 
 
@@ -5260,7 +2778,7 @@ shape(alphas[alphas > 0])
 
 
 
-    (1, 10)
+    (4,)
 
 
 
@@ -5271,16 +2789,10 @@ for i in range(100):
         print(dataArr[i], labelArr[i])
 ```
 
-    [3.542485, 1.977398] -1.0
-    [2.326297, 0.265213] -1.0
-    [4.658191, 3.507396] -1.0
-    [3.223038, -0.552392] -1.0
-    [2.301095, -0.533988] -1.0
-    [3.457096, -0.082216] -1.0
-    [3.023938, -0.057392] -1.0
-    [2.893743, -1.643468] -1.0
-    [1.870457, -1.04042] -1.0
-    [6.080573, 0.418886] 1.0
+    [4.658191, 3.507396] [-1.0]
+    [3.457096, -0.082216] [-1.0]
+    [5.286862, -2.358286] [1.0]
+    [6.080573, 0.418886] [1.0]
     
 
 # 4. 利用完整的Platt SMO算法加速优化
@@ -5302,13 +2814,13 @@ class optStruct:
         self.C = C
         self.tol = toler
         self.m = shape(dataMatIn)[0]
-        self.alphas = mat(zeros((self.m, 1)))
+        self.alphas = zeros((self.m, 1))
         self.b = 0
-        self.eCache = mat(zeros((self.m, 2)))        #误差缓存
+        self.eCache = zeros((self.m, 2))        #误差缓存
 
 def calcEk(oS, k):
-    fXk = float(multiply(oS.alphas, oS.labelMat).T * (oS.X * oS.X[k, :].T)) + oS.b
-    Ek = fXk - float(oS.labelMat[k])
+    fXk = dot((oS.alphas * oS.labelMat).T, dot(oS.X, oS.X[k, :])) + oS.b
+    Ek = fXk - oS.labelMat[k]
     return Ek
 
 def selectJ(i, oS, Ei):           #内循环中的启发式方法
@@ -5316,7 +2828,7 @@ def selectJ(i, oS, Ei):           #内循环中的启发式方法
     maxDeltaE = 0
     Ej = 0
     oS.eCache[i] = [1, Ei]
-    validEcacheList = nonzero(oS.eCache[:, 0].A)[0]
+    validEcacheList = nonzero(oS.eCache[:, 0])[0]
     if len(validEcacheList) > 1:
         for k in validEcacheList:
             if k == i:
@@ -5352,7 +2864,9 @@ def innerL(i, oS):
         if L == H:
             print('L == H')
             return 0
-        eta = 2.0 * oS.X[i, :] * oS.X[j, :].T - oS.X[i, :] * oS.X[i, :].T - oS.X[j, :] * oS.X[j, :].T
+        eta = 2.0 * dot(oS.X[i, :], oS.X[j, :]) - \
+                    dot(oS.X[i, :], oS.X[i, :]) - \
+                    dot(oS.X[j, :], oS.X[j, :])
         if eta >= 0:
             print('eta >= 0')
             return 0
@@ -5364,10 +2878,10 @@ def innerL(i, oS):
             return 0
         oS.alphas[i] += oS.labelMat[j] * oS.labelMat[i] * (alphaJold - oS.alphas[j])
         updateEk(oS, i)                           #更新误差缓存
-        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i, :] * oS.X[i, :].T - \
-             oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[i, :] * oS.X[j, :].T
-        b2 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * oS.X[i, :] * oS.X[j, :].T - \
-             oS.labelMat[j] * (oS.alphas[j] - alphaJold) * oS.X[j, :] * oS.X[j, :].T
+        b1 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * dot(oS.X[i, :], oS.X[i, :]) - \
+                         oS.labelMat[j] * (oS.alphas[j] - alphaJold) * dot(oS.X[i, :], oS.X[j, :])
+        b2 = oS.b - Ei - oS.labelMat[i] * (oS.alphas[i] - alphaIold) * dot(oS.X[i, :], oS.X[j, :]) - \
+                         oS.labelMat[j] * (oS.alphas[j] - alphaJold) * dot(oS.X[j, :], oS.X[j, :])
         if 0 < oS.alphas[i] < oS.C:
             oS.b = b1
         elif 0 < oS.alphas[j] < oS.C:  # 设置常数项
@@ -5377,9 +2891,9 @@ def innerL(i, oS):
         return 1
     else:
         return 0
-    
-def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
-    oS = optStruct(mat(dataMatIn), mat(classLabels).T, C, toler)
+
+def smoP(dataMatIn, classLabels, C, toler, maxIter):
+    oS = optStruct(array(dataMatIn), array(classLabels), C, toler)
     iter = 0
     entireSet = True
     alphaPairsChanged = 0
@@ -5391,7 +2905,7 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
                 print('fullSet, iter: %d i: %d, pairs changed %d' % (iter, i, alphaPairsChanged))
             iter += 1
         else:                         #遍历非边界值
-            nonBoundIs = nonzero((oS.alphas.A > 0) * (oS.alphas.A < C))[0]
+            nonBoundIs = nonzero((oS.alphas > 0) * (oS.alphas < C))[0]
             for i in nonBoundIs:
                 alphaPairsChanged += innerL(i, oS)
                 print('non-bound, iter: %d i: %d, pairs changed %d' % (iter, i, alphaPairsChanged))
@@ -5407,263 +2921,272 @@ dataArr, labelArr = loadDataSet('testSet.txt')
 b, alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
 ```
 
-    fullSet, iter: 0 i: 0, pairs changed 1
-    fullSet, iter: 0 i: 1, pairs changed 1
+    L == H
+    fullSet, iter: 0 i: 0, pairs changed 0
+    L == H
+    fullSet, iter: 0 i: 1, pairs changed 0
     fullSet, iter: 0 i: 2, pairs changed 1
+    L == H
     fullSet, iter: 0 i: 3, pairs changed 1
     fullSet, iter: 0 i: 4, pairs changed 2
-    fullSet, iter: 0 i: 5, pairs changed 3
-    fullSet, iter: 0 i: 6, pairs changed 4
-    fullSet, iter: 0 i: 7, pairs changed 4
+    fullSet, iter: 0 i: 5, pairs changed 2
+    fullSet, iter: 0 i: 6, pairs changed 2
     j not moving enough
-    fullSet, iter: 0 i: 8, pairs changed 4
-    fullSet, iter: 0 i: 9, pairs changed 4
-    fullSet, iter: 0 i: 10, pairs changed 5
-    fullSet, iter: 0 i: 11, pairs changed 5
-    fullSet, iter: 0 i: 12, pairs changed 5
-    fullSet, iter: 0 i: 13, pairs changed 5
-    fullSet, iter: 0 i: 14, pairs changed 5
-    fullSet, iter: 0 i: 15, pairs changed 5
-    fullSet, iter: 0 i: 16, pairs changed 5
-    fullSet, iter: 0 i: 17, pairs changed 5
+    fullSet, iter: 0 i: 7, pairs changed 2
     L == H
-    fullSet, iter: 0 i: 18, pairs changed 5
-    fullSet, iter: 0 i: 19, pairs changed 5
-    fullSet, iter: 0 i: 20, pairs changed 5
-    fullSet, iter: 0 i: 21, pairs changed 5
-    fullSet, iter: 0 i: 22, pairs changed 5
-    fullSet, iter: 0 i: 23, pairs changed 6
+    fullSet, iter: 0 i: 8, pairs changed 2
+    fullSet, iter: 0 i: 9, pairs changed 2
+    L == H
+    fullSet, iter: 0 i: 10, pairs changed 2
+    L == H
+    fullSet, iter: 0 i: 11, pairs changed 2
+    L == H
+    fullSet, iter: 0 i: 12, pairs changed 2
+    fullSet, iter: 0 i: 13, pairs changed 2
+    L == H
+    fullSet, iter: 0 i: 14, pairs changed 2
+    fullSet, iter: 0 i: 15, pairs changed 2
+    fullSet, iter: 0 i: 16, pairs changed 2
+    L == H
+    fullSet, iter: 0 i: 17, pairs changed 2
+    fullSet, iter: 0 i: 18, pairs changed 3
+    fullSet, iter: 0 i: 19, pairs changed 3
+    fullSet, iter: 0 i: 20, pairs changed 3
+    fullSet, iter: 0 i: 21, pairs changed 3
     j not moving enough
-    fullSet, iter: 0 i: 24, pairs changed 6
-    fullSet, iter: 0 i: 25, pairs changed 7
+    fullSet, iter: 0 i: 22, pairs changed 3
     L == H
-    fullSet, iter: 0 i: 26, pairs changed 7
-    fullSet, iter: 0 i: 27, pairs changed 7
-    fullSet, iter: 0 i: 28, pairs changed 7
-    fullSet, iter: 0 i: 29, pairs changed 8
-    fullSet, iter: 0 i: 30, pairs changed 8
-    fullSet, iter: 0 i: 31, pairs changed 8
-    fullSet, iter: 0 i: 32, pairs changed 8
-    fullSet, iter: 0 i: 33, pairs changed 8
-    fullSet, iter: 0 i: 34, pairs changed 8
-    fullSet, iter: 0 i: 35, pairs changed 8
-    fullSet, iter: 0 i: 36, pairs changed 8
-    fullSet, iter: 0 i: 37, pairs changed 8
-    fullSet, iter: 0 i: 38, pairs changed 8
-    fullSet, iter: 0 i: 39, pairs changed 8
-    fullSet, iter: 0 i: 40, pairs changed 8
-    fullSet, iter: 0 i: 41, pairs changed 8
-    fullSet, iter: 0 i: 42, pairs changed 8
-    fullSet, iter: 0 i: 43, pairs changed 8
-    fullSet, iter: 0 i: 44, pairs changed 8
-    fullSet, iter: 0 i: 45, pairs changed 8
+    fullSet, iter: 0 i: 23, pairs changed 3
     L == H
-    fullSet, iter: 0 i: 46, pairs changed 8
-    fullSet, iter: 0 i: 47, pairs changed 8
-    fullSet, iter: 0 i: 48, pairs changed 8
-    fullSet, iter: 0 i: 49, pairs changed 8
-    fullSet, iter: 0 i: 50, pairs changed 8
-    fullSet, iter: 0 i: 51, pairs changed 8
-    fullSet, iter: 0 i: 52, pairs changed 8
-    fullSet, iter: 0 i: 53, pairs changed 8
+    fullSet, iter: 0 i: 24, pairs changed 3
+    fullSet, iter: 0 i: 25, pairs changed 4
+    j not moving enough
+    fullSet, iter: 0 i: 26, pairs changed 4
+    fullSet, iter: 0 i: 27, pairs changed 4
+    fullSet, iter: 0 i: 28, pairs changed 4
     L == H
-    fullSet, iter: 0 i: 54, pairs changed 8
+    fullSet, iter: 0 i: 29, pairs changed 4
+    fullSet, iter: 0 i: 30, pairs changed 4
+    fullSet, iter: 0 i: 31, pairs changed 4
+    fullSet, iter: 0 i: 32, pairs changed 4
+    fullSet, iter: 0 i: 33, pairs changed 4
+    fullSet, iter: 0 i: 34, pairs changed 4
+    fullSet, iter: 0 i: 35, pairs changed 4
+    fullSet, iter: 0 i: 36, pairs changed 4
+    fullSet, iter: 0 i: 37, pairs changed 4
+    fullSet, iter: 0 i: 38, pairs changed 4
+    fullSet, iter: 0 i: 39, pairs changed 4
+    fullSet, iter: 0 i: 40, pairs changed 4
+    fullSet, iter: 0 i: 41, pairs changed 4
+    fullSet, iter: 0 i: 42, pairs changed 4
+    fullSet, iter: 0 i: 43, pairs changed 4
+    fullSet, iter: 0 i: 44, pairs changed 4
+    fullSet, iter: 0 i: 45, pairs changed 4
+    fullSet, iter: 0 i: 46, pairs changed 5
+    fullSet, iter: 0 i: 47, pairs changed 5
+    fullSet, iter: 0 i: 48, pairs changed 5
+    fullSet, iter: 0 i: 49, pairs changed 5
+    fullSet, iter: 0 i: 50, pairs changed 5
+    fullSet, iter: 0 i: 51, pairs changed 5
     L == H
-    fullSet, iter: 0 i: 55, pairs changed 8
-    fullSet, iter: 0 i: 56, pairs changed 8
+    fullSet, iter: 0 i: 52, pairs changed 5
+    fullSet, iter: 0 i: 53, pairs changed 5
     L == H
-    fullSet, iter: 0 i: 57, pairs changed 8
-    fullSet, iter: 0 i: 58, pairs changed 8
-    fullSet, iter: 0 i: 59, pairs changed 8
-    fullSet, iter: 0 i: 60, pairs changed 8
-    fullSet, iter: 0 i: 61, pairs changed 8
-    fullSet, iter: 0 i: 62, pairs changed 8
-    fullSet, iter: 0 i: 63, pairs changed 8
-    fullSet, iter: 0 i: 64, pairs changed 8
-    fullSet, iter: 0 i: 65, pairs changed 8
-    fullSet, iter: 0 i: 66, pairs changed 8
-    fullSet, iter: 0 i: 67, pairs changed 8
-    fullSet, iter: 0 i: 68, pairs changed 8
+    fullSet, iter: 0 i: 54, pairs changed 5
     L == H
-    fullSet, iter: 0 i: 69, pairs changed 8
-    fullSet, iter: 0 i: 70, pairs changed 8
-    fullSet, iter: 0 i: 71, pairs changed 8
-    fullSet, iter: 0 i: 72, pairs changed 8
-    fullSet, iter: 0 i: 73, pairs changed 8
-    fullSet, iter: 0 i: 74, pairs changed 8
-    fullSet, iter: 0 i: 75, pairs changed 8
-    fullSet, iter: 0 i: 76, pairs changed 8
-    fullSet, iter: 0 i: 77, pairs changed 8
-    fullSet, iter: 0 i: 78, pairs changed 8
-    fullSet, iter: 0 i: 79, pairs changed 8
-    fullSet, iter: 0 i: 80, pairs changed 8
-    fullSet, iter: 0 i: 81, pairs changed 8
-    fullSet, iter: 0 i: 82, pairs changed 8
-    fullSet, iter: 0 i: 83, pairs changed 8
-    fullSet, iter: 0 i: 84, pairs changed 8
-    fullSet, iter: 0 i: 85, pairs changed 8
-    fullSet, iter: 0 i: 86, pairs changed 8
-    fullSet, iter: 0 i: 87, pairs changed 8
-    fullSet, iter: 0 i: 88, pairs changed 8
-    fullSet, iter: 0 i: 89, pairs changed 8
-    fullSet, iter: 0 i: 90, pairs changed 8
-    fullSet, iter: 0 i: 91, pairs changed 8
-    fullSet, iter: 0 i: 92, pairs changed 8
-    fullSet, iter: 0 i: 93, pairs changed 8
-    fullSet, iter: 0 i: 94, pairs changed 8
-    fullSet, iter: 0 i: 95, pairs changed 8
-    fullSet, iter: 0 i: 96, pairs changed 8
-    fullSet, iter: 0 i: 97, pairs changed 8
-    fullSet, iter: 0 i: 98, pairs changed 8
-    fullSet, iter: 0 i: 99, pairs changed 8
+    fullSet, iter: 0 i: 55, pairs changed 5
+    fullSet, iter: 0 i: 56, pairs changed 5
+    fullSet, iter: 0 i: 57, pairs changed 5
+    fullSet, iter: 0 i: 58, pairs changed 5
+    fullSet, iter: 0 i: 59, pairs changed 5
+    fullSet, iter: 0 i: 60, pairs changed 5
+    fullSet, iter: 0 i: 61, pairs changed 5
+    fullSet, iter: 0 i: 62, pairs changed 5
+    fullSet, iter: 0 i: 63, pairs changed 5
+    fullSet, iter: 0 i: 64, pairs changed 5
+    fullSet, iter: 0 i: 65, pairs changed 5
+    fullSet, iter: 0 i: 66, pairs changed 5
+    fullSet, iter: 0 i: 67, pairs changed 5
+    fullSet, iter: 0 i: 68, pairs changed 5
+    L == H
+    fullSet, iter: 0 i: 69, pairs changed 5
+    fullSet, iter: 0 i: 70, pairs changed 5
+    fullSet, iter: 0 i: 71, pairs changed 5
+    fullSet, iter: 0 i: 72, pairs changed 5
+    fullSet, iter: 0 i: 73, pairs changed 5
+    fullSet, iter: 0 i: 74, pairs changed 5
+    fullSet, iter: 0 i: 75, pairs changed 5
+    fullSet, iter: 0 i: 76, pairs changed 5
+    fullSet, iter: 0 i: 77, pairs changed 5
+    fullSet, iter: 0 i: 78, pairs changed 5
+    fullSet, iter: 0 i: 79, pairs changed 5
+    fullSet, iter: 0 i: 80, pairs changed 5
+    fullSet, iter: 0 i: 81, pairs changed 5
+    fullSet, iter: 0 i: 82, pairs changed 5
+    fullSet, iter: 0 i: 83, pairs changed 5
+    fullSet, iter: 0 i: 84, pairs changed 5
+    fullSet, iter: 0 i: 85, pairs changed 5
+    fullSet, iter: 0 i: 86, pairs changed 5
+    fullSet, iter: 0 i: 87, pairs changed 5
+    fullSet, iter: 0 i: 88, pairs changed 5
+    fullSet, iter: 0 i: 89, pairs changed 5
+    fullSet, iter: 0 i: 90, pairs changed 5
+    fullSet, iter: 0 i: 91, pairs changed 5
+    fullSet, iter: 0 i: 92, pairs changed 5
+    fullSet, iter: 0 i: 93, pairs changed 5
+    fullSet, iter: 0 i: 94, pairs changed 6
+    fullSet, iter: 0 i: 95, pairs changed 6
+    fullSet, iter: 0 i: 96, pairs changed 6
+    j not moving enough
+    fullSet, iter: 0 i: 97, pairs changed 6
+    fullSet, iter: 0 i: 98, pairs changed 6
+    fullSet, iter: 0 i: 99, pairs changed 6
     iteration number: 1
     j not moving enough
     non-bound, iter: 1 i: 0, pairs changed 0
-    non-bound, iter: 1 i: 4, pairs changed 1
-    non-bound, iter: 1 i: 5, pairs changed 2
-    non-bound, iter: 1 i: 10, pairs changed 3
     j not moving enough
-    non-bound, iter: 1 i: 23, pairs changed 3
-    non-bound, iter: 1 i: 25, pairs changed 4
-    non-bound, iter: 1 i: 26, pairs changed 5
+    non-bound, iter: 1 i: 3, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 29, pairs changed 5
+    non-bound, iter: 1 i: 4, pairs changed 0
+    j not moving enough
+    non-bound, iter: 1 i: 17, pairs changed 0
+    j not moving enough
+    non-bound, iter: 1 i: 18, pairs changed 0
+    j not moving enough
+    non-bound, iter: 1 i: 25, pairs changed 0
+    j not moving enough
+    non-bound, iter: 1 i: 46, pairs changed 0
+    non-bound, iter: 1 i: 55, pairs changed 0
+    non-bound, iter: 1 i: 94, pairs changed 0
     iteration number: 2
     j not moving enough
-    non-bound, iter: 2 i: 0, pairs changed 0
+    fullSet, iter: 2 i: 0, pairs changed 0
+    fullSet, iter: 2 i: 1, pairs changed 0
+    fullSet, iter: 2 i: 2, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 10, pairs changed 0
+    fullSet, iter: 2 i: 3, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 23, pairs changed 0
+    fullSet, iter: 2 i: 4, pairs changed 0
+    fullSet, iter: 2 i: 5, pairs changed 0
+    fullSet, iter: 2 i: 6, pairs changed 0
+    fullSet, iter: 2 i: 7, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 29, pairs changed 0
+    fullSet, iter: 2 i: 8, pairs changed 0
+    fullSet, iter: 2 i: 9, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 54, pairs changed 0
+    fullSet, iter: 2 i: 10, pairs changed 0
+    fullSet, iter: 2 i: 11, pairs changed 0
+    fullSet, iter: 2 i: 12, pairs changed 0
+    fullSet, iter: 2 i: 13, pairs changed 0
+    fullSet, iter: 2 i: 14, pairs changed 0
+    fullSet, iter: 2 i: 15, pairs changed 0
+    fullSet, iter: 2 i: 16, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 55, pairs changed 0
-    iteration number: 3
+    fullSet, iter: 2 i: 17, pairs changed 0
     j not moving enough
-    fullSet, iter: 3 i: 0, pairs changed 0
-    fullSet, iter: 3 i: 1, pairs changed 0
-    fullSet, iter: 3 i: 2, pairs changed 0
-    fullSet, iter: 3 i: 3, pairs changed 0
-    fullSet, iter: 3 i: 4, pairs changed 0
-    fullSet, iter: 3 i: 5, pairs changed 0
-    fullSet, iter: 3 i: 6, pairs changed 0
-    fullSet, iter: 3 i: 7, pairs changed 0
-    fullSet, iter: 3 i: 8, pairs changed 0
-    fullSet, iter: 3 i: 9, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 10, pairs changed 0
-    fullSet, iter: 3 i: 11, pairs changed 0
-    fullSet, iter: 3 i: 12, pairs changed 0
-    fullSet, iter: 3 i: 13, pairs changed 0
-    fullSet, iter: 3 i: 14, pairs changed 0
-    fullSet, iter: 3 i: 15, pairs changed 0
-    fullSet, iter: 3 i: 16, pairs changed 0
-    fullSet, iter: 3 i: 17, pairs changed 0
-    fullSet, iter: 3 i: 18, pairs changed 0
-    fullSet, iter: 3 i: 19, pairs changed 0
-    fullSet, iter: 3 i: 20, pairs changed 0
-    fullSet, iter: 3 i: 21, pairs changed 0
-    fullSet, iter: 3 i: 22, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 23, pairs changed 0
-    fullSet, iter: 3 i: 24, pairs changed 0
-    fullSet, iter: 3 i: 25, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 26, pairs changed 0
-    fullSet, iter: 3 i: 27, pairs changed 0
-    fullSet, iter: 3 i: 28, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 29, pairs changed 0
-    fullSet, iter: 3 i: 30, pairs changed 0
-    fullSet, iter: 3 i: 31, pairs changed 0
-    fullSet, iter: 3 i: 32, pairs changed 0
-    fullSet, iter: 3 i: 33, pairs changed 0
-    fullSet, iter: 3 i: 34, pairs changed 0
-    fullSet, iter: 3 i: 35, pairs changed 0
-    fullSet, iter: 3 i: 36, pairs changed 0
-    fullSet, iter: 3 i: 37, pairs changed 0
-    fullSet, iter: 3 i: 38, pairs changed 0
-    fullSet, iter: 3 i: 39, pairs changed 0
-    fullSet, iter: 3 i: 40, pairs changed 0
-    fullSet, iter: 3 i: 41, pairs changed 0
-    fullSet, iter: 3 i: 42, pairs changed 0
-    fullSet, iter: 3 i: 43, pairs changed 0
-    fullSet, iter: 3 i: 44, pairs changed 0
-    fullSet, iter: 3 i: 45, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 46, pairs changed 0
-    fullSet, iter: 3 i: 47, pairs changed 0
-    fullSet, iter: 3 i: 48, pairs changed 0
-    fullSet, iter: 3 i: 49, pairs changed 0
-    fullSet, iter: 3 i: 50, pairs changed 0
-    fullSet, iter: 3 i: 51, pairs changed 0
-    fullSet, iter: 3 i: 52, pairs changed 0
-    fullSet, iter: 3 i: 53, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 54, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 55, pairs changed 0
-    fullSet, iter: 3 i: 56, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 57, pairs changed 0
-    fullSet, iter: 3 i: 58, pairs changed 0
-    fullSet, iter: 3 i: 59, pairs changed 0
-    fullSet, iter: 3 i: 60, pairs changed 0
-    fullSet, iter: 3 i: 61, pairs changed 0
-    fullSet, iter: 3 i: 62, pairs changed 0
-    fullSet, iter: 3 i: 63, pairs changed 0
-    fullSet, iter: 3 i: 64, pairs changed 0
-    fullSet, iter: 3 i: 65, pairs changed 0
-    fullSet, iter: 3 i: 66, pairs changed 0
-    fullSet, iter: 3 i: 67, pairs changed 0
-    fullSet, iter: 3 i: 68, pairs changed 0
+    fullSet, iter: 2 i: 18, pairs changed 0
+    fullSet, iter: 2 i: 19, pairs changed 0
+    fullSet, iter: 2 i: 20, pairs changed 0
+    fullSet, iter: 2 i: 21, pairs changed 0
+    fullSet, iter: 2 i: 22, pairs changed 0
     L == H
-    fullSet, iter: 3 i: 69, pairs changed 0
-    fullSet, iter: 3 i: 70, pairs changed 0
-    fullSet, iter: 3 i: 71, pairs changed 0
-    fullSet, iter: 3 i: 72, pairs changed 0
-    fullSet, iter: 3 i: 73, pairs changed 0
-    fullSet, iter: 3 i: 74, pairs changed 0
-    fullSet, iter: 3 i: 75, pairs changed 0
-    fullSet, iter: 3 i: 76, pairs changed 0
-    fullSet, iter: 3 i: 77, pairs changed 0
-    fullSet, iter: 3 i: 78, pairs changed 0
-    fullSet, iter: 3 i: 79, pairs changed 0
-    fullSet, iter: 3 i: 80, pairs changed 0
-    fullSet, iter: 3 i: 81, pairs changed 0
-    fullSet, iter: 3 i: 82, pairs changed 0
-    fullSet, iter: 3 i: 83, pairs changed 0
-    fullSet, iter: 3 i: 84, pairs changed 0
-    fullSet, iter: 3 i: 85, pairs changed 0
-    fullSet, iter: 3 i: 86, pairs changed 0
-    fullSet, iter: 3 i: 87, pairs changed 0
-    fullSet, iter: 3 i: 88, pairs changed 0
-    fullSet, iter: 3 i: 89, pairs changed 0
-    fullSet, iter: 3 i: 90, pairs changed 0
-    fullSet, iter: 3 i: 91, pairs changed 0
-    fullSet, iter: 3 i: 92, pairs changed 0
-    fullSet, iter: 3 i: 93, pairs changed 0
-    fullSet, iter: 3 i: 94, pairs changed 0
-    fullSet, iter: 3 i: 95, pairs changed 0
-    fullSet, iter: 3 i: 96, pairs changed 0
-    fullSet, iter: 3 i: 97, pairs changed 0
-    fullSet, iter: 3 i: 98, pairs changed 0
-    fullSet, iter: 3 i: 99, pairs changed 0
-    iteration number: 4
+    fullSet, iter: 2 i: 23, pairs changed 0
+    j not moving enough
+    fullSet, iter: 2 i: 24, pairs changed 0
+    j not moving enough
+    fullSet, iter: 2 i: 25, pairs changed 0
+    fullSet, iter: 2 i: 26, pairs changed 0
+    fullSet, iter: 2 i: 27, pairs changed 0
+    fullSet, iter: 2 i: 28, pairs changed 0
+    L == H
+    fullSet, iter: 2 i: 29, pairs changed 0
+    j not moving enough
+    fullSet, iter: 2 i: 30, pairs changed 0
+    fullSet, iter: 2 i: 31, pairs changed 0
+    fullSet, iter: 2 i: 32, pairs changed 0
+    fullSet, iter: 2 i: 33, pairs changed 0
+    fullSet, iter: 2 i: 34, pairs changed 0
+    fullSet, iter: 2 i: 35, pairs changed 0
+    fullSet, iter: 2 i: 36, pairs changed 0
+    fullSet, iter: 2 i: 37, pairs changed 0
+    fullSet, iter: 2 i: 38, pairs changed 0
+    fullSet, iter: 2 i: 39, pairs changed 0
+    fullSet, iter: 2 i: 40, pairs changed 0
+    fullSet, iter: 2 i: 41, pairs changed 0
+    fullSet, iter: 2 i: 42, pairs changed 0
+    fullSet, iter: 2 i: 43, pairs changed 0
+    fullSet, iter: 2 i: 44, pairs changed 0
+    fullSet, iter: 2 i: 45, pairs changed 0
+    j not moving enough
+    fullSet, iter: 2 i: 46, pairs changed 0
+    fullSet, iter: 2 i: 47, pairs changed 0
+    fullSet, iter: 2 i: 48, pairs changed 0
+    fullSet, iter: 2 i: 49, pairs changed 0
+    fullSet, iter: 2 i: 50, pairs changed 0
+    fullSet, iter: 2 i: 51, pairs changed 0
+    L == H
+    fullSet, iter: 2 i: 52, pairs changed 0
+    fullSet, iter: 2 i: 53, pairs changed 0
+    L == H
+    fullSet, iter: 2 i: 54, pairs changed 0
+    fullSet, iter: 2 i: 55, pairs changed 0
+    fullSet, iter: 2 i: 56, pairs changed 0
+    fullSet, iter: 2 i: 57, pairs changed 0
+    fullSet, iter: 2 i: 58, pairs changed 0
+    fullSet, iter: 2 i: 59, pairs changed 0
+    fullSet, iter: 2 i: 60, pairs changed 0
+    fullSet, iter: 2 i: 61, pairs changed 0
+    fullSet, iter: 2 i: 62, pairs changed 0
+    fullSet, iter: 2 i: 63, pairs changed 0
+    fullSet, iter: 2 i: 64, pairs changed 0
+    fullSet, iter: 2 i: 65, pairs changed 0
+    fullSet, iter: 2 i: 66, pairs changed 0
+    fullSet, iter: 2 i: 67, pairs changed 0
+    fullSet, iter: 2 i: 68, pairs changed 0
+    fullSet, iter: 2 i: 69, pairs changed 0
+    fullSet, iter: 2 i: 70, pairs changed 0
+    fullSet, iter: 2 i: 71, pairs changed 0
+    fullSet, iter: 2 i: 72, pairs changed 0
+    fullSet, iter: 2 i: 73, pairs changed 0
+    fullSet, iter: 2 i: 74, pairs changed 0
+    fullSet, iter: 2 i: 75, pairs changed 0
+    fullSet, iter: 2 i: 76, pairs changed 0
+    fullSet, iter: 2 i: 77, pairs changed 0
+    fullSet, iter: 2 i: 78, pairs changed 0
+    fullSet, iter: 2 i: 79, pairs changed 0
+    fullSet, iter: 2 i: 80, pairs changed 0
+    fullSet, iter: 2 i: 81, pairs changed 0
+    fullSet, iter: 2 i: 82, pairs changed 0
+    fullSet, iter: 2 i: 83, pairs changed 0
+    fullSet, iter: 2 i: 84, pairs changed 0
+    fullSet, iter: 2 i: 85, pairs changed 0
+    fullSet, iter: 2 i: 86, pairs changed 0
+    fullSet, iter: 2 i: 87, pairs changed 0
+    fullSet, iter: 2 i: 88, pairs changed 0
+    fullSet, iter: 2 i: 89, pairs changed 0
+    fullSet, iter: 2 i: 90, pairs changed 0
+    fullSet, iter: 2 i: 91, pairs changed 0
+    fullSet, iter: 2 i: 92, pairs changed 0
+    fullSet, iter: 2 i: 93, pairs changed 0
+    fullSet, iter: 2 i: 94, pairs changed 0
+    fullSet, iter: 2 i: 95, pairs changed 0
+    fullSet, iter: 2 i: 96, pairs changed 0
+    j not moving enough
+    fullSet, iter: 2 i: 97, pairs changed 0
+    fullSet, iter: 2 i: 98, pairs changed 0
+    fullSet, iter: 2 i: 99, pairs changed 0
+    iteration number: 3
     
 
 
 ```python
 def calcWs(alphas, dataArr, classLabels):
-    X = mat(dataArr)
-    labelMat = mat(classLabels).T
+    X = array(dataArr)
+    labelMat = array(classLabels)
     m, n = shape(X)
     w = zeros((n, 1))
     for i in range(m):
-        w += multiply(alphas[i] * labelMat[i], X[i, :].T)
+        w += alphas[i] * labelMat[i] * array([X[i, :]]).T
     return w
 
 ws = calcWs(alphas, dataArr, labelArr)
@@ -5673,8 +3196,8 @@ ws
 
 
 
-    array([[ 0.57421375],
-           [-0.17224914]])
+    array([[ 0.65307162],
+           [-0.17196128]])
 
 
 
@@ -5685,8 +3208,8 @@ print(dataMat[0] * mat(ws) + b)
 print(labelArr[0])
 ```
 
-    [[-1.48292458]]
-    -1.0
+    [[-0.92555695]]
+    [-1.0]
     
 
 
@@ -5697,10 +3220,10 @@ print(dataMat[1] * mat(ws) + b)
 print(labelArr[1])
 ```
 
-    [[1.4318766]]
-    1.0
-    [[-1.88331193]]
-    -1.0
+    [[2.30436336]]
+    [1.0]
+    [[-1.36706674]]
+    [-1.0]
     
 
 # 5. 在复杂数据上应用核函数
@@ -5737,14 +3260,14 @@ $$ k(x,y) = exp(\frac {-||x-y||^2} {2\sigma^2})$$
 ```python
 def kernelTrans(X, A, kTup):
     m, n = shape(X)
-    K = mat(zeros((m, 1)))
+    K = zeros((m, 1))
     if kTup[0] == 'lin':
-        K = X * A.T
+        K = dot(X, A)
     elif kTup[0] == 'rbf':
         for j in range(m):
             deltaRow = X[j, :] - A
-            K[j] = deltaRow * deltaRow.T
-        K = exp(K / (-1 * kTup[1]**2))       #元素间的除法
+            K[j] = dot(deltaRow, deltaRow)
+        K = exp(K / (-1 * kTup[1]**2))     #元素间的除法
     else:
         raise NameError('Houston we Have a Problem -- That Kernel is not recognized')
     return K
@@ -5756,16 +3279,16 @@ class optStruct:
         self.C = C
         self.tol = toler
         self.m = shape(dataMatIn)[0]
-        self.alphas = mat(zeros((self.m, 1)))
+        self.alphas = zeros((self.m, 1))
         self.b = 0
-        self.eCache = mat(zeros((self.m, 2)))        #误差缓存
-        self.K = mat(zeros((self.m, self.m)))
+        self.eCache = zeros((self.m, 2))        #误差缓存
+        self.K = zeros((self.m, self.m))
         for i in range(self.m):
-            self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup)
-            
+            self.K[:, i] = kernelTrans(self.X, self.X[i, :], kTup).T
+
 def calcEk(oS, k):
-    fXk = float(multiply(oS.alphas, oS.labelMat).T * oS.K[:, k] + oS.b)
-    Ek = fXk - float(oS.labelMat[k])
+    fXk = dot((oS.alphas * oS.labelMat).T, oS.K[:, k]) + oS.b
+    Ek = fXk - oS.labelMat[k]
     return Ek
 
 def innerL(i, oS):
@@ -5810,7 +3333,7 @@ def innerL(i, oS):
         return 0
 
 def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
-    oS = optStruct(mat(dataMatIn), mat(classLabels).T, C, toler, kTup)
+    oS = optStruct(array(dataMatIn), array(classLabels), C, toler, kTup)
     iter = 0
     entireSet = True
     alphaPairsChanged = 0
@@ -5822,7 +3345,7 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
                 print('fullSet, iter: %d i: %d, pairs changed %d' % (iter, i, alphaPairsChanged))
             iter += 1
         else:                         #遍历非边界值
-            nonBoundIs = nonzero((oS.alphas.A > 0) * (oS.alphas.A < C))[0]
+            nonBoundIs = nonzero((oS.alphas > 0) * (oS.alphas < C))[0]
             for i in nonBoundIs:
                 alphaPairsChanged += innerL(i, oS)
                 print('non-bound, iter: %d i: %d, pairs changed %d' % (iter, i, alphaPairsChanged))
@@ -5842,9 +3365,9 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup = ('lin', 0)):
 def testRbf(k1 = 1.3):
     dataArr, labelArr = loadDataSet('testSetRBF.txt')
     b, alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1))
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
-    svInd = nonzero(alphas.A > 0)[0]
+    datMat = array(dataArr)
+    labelMat = array(labelArr)
+    svInd = nonzero(alphas > 0)[0]
     sVs = datMat[svInd]                 #构建支持向量矩阵
     labelSV = labelMat[svInd]
     print('there are %d Support Vectors' % shape(sVs)[0])
@@ -5852,18 +3375,17 @@ def testRbf(k1 = 1.3):
     errorCount = 0
     for i in range(m):
         kernelEval = kernelTrans(sVs, datMat[i, :], ('rbf', k1))
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
+        predict = dot(kernelEval.T, (labelSV * alphas[svInd])) + b
         if sign(predict) != sign(labelArr[i]):
             errorCount += 1
     print('the training error rate is: %f' % (float(errorCount) / m))
     dataArr, labelArr = loadDataSet('testSetRBF2.txt')
     errorCount = 0
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
+    datMat = array(dataArr)
     m, n = shape(datMat)
     for i in range(m):
         kernelEval = kernelTrans(sVs, datMat[i, :], ('rbf', k1))
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
+        predict = dot(kernelEval.T, (labelSV * alphas[svInd])) + b
         if sign(predict) != sign(labelArr[i]):
             errorCount += 1
     print('the test error rate is: %f' % (float(errorCount) / m))
@@ -5871,76 +3393,76 @@ def testRbf(k1 = 1.3):
 testRbf()
 ```
 
-    fullSet, iter: 0 i: 0, pairs changed 1
-    fullSet, iter: 0 i: 1, pairs changed 2
-    fullSet, iter: 0 i: 2, pairs changed 3
-    fullSet, iter: 0 i: 3, pairs changed 4
-    fullSet, iter: 0 i: 4, pairs changed 5
-    fullSet, iter: 0 i: 5, pairs changed 6
-    fullSet, iter: 0 i: 6, pairs changed 7
-    fullSet, iter: 0 i: 7, pairs changed 7
-    fullSet, iter: 0 i: 8, pairs changed 8
-    fullSet, iter: 0 i: 9, pairs changed 8
-    fullSet, iter: 0 i: 10, pairs changed 9
-    fullSet, iter: 0 i: 11, pairs changed 10
     L == H
-    fullSet, iter: 0 i: 12, pairs changed 10
-    L == H
-    fullSet, iter: 0 i: 13, pairs changed 10
-    L == H
-    fullSet, iter: 0 i: 14, pairs changed 10
-    fullSet, iter: 0 i: 15, pairs changed 11
-    fullSet, iter: 0 i: 16, pairs changed 12
+    fullSet, iter: 0 i: 0, pairs changed 0
+    fullSet, iter: 0 i: 1, pairs changed 1
+    fullSet, iter: 0 i: 2, pairs changed 2
+    fullSet, iter: 0 i: 3, pairs changed 3
+    fullSet, iter: 0 i: 4, pairs changed 3
+    fullSet, iter: 0 i: 5, pairs changed 4
+    fullSet, iter: 0 i: 6, pairs changed 4
+    fullSet, iter: 0 i: 7, pairs changed 5
+    fullSet, iter: 0 i: 8, pairs changed 5
+    fullSet, iter: 0 i: 9, pairs changed 5
+    fullSet, iter: 0 i: 10, pairs changed 6
+    fullSet, iter: 0 i: 11, pairs changed 7
+    fullSet, iter: 0 i: 12, pairs changed 7
+    fullSet, iter: 0 i: 13, pairs changed 8
+    fullSet, iter: 0 i: 14, pairs changed 9
+    fullSet, iter: 0 i: 15, pairs changed 10
+    fullSet, iter: 0 i: 16, pairs changed 11
     fullSet, iter: 0 i: 17, pairs changed 12
     fullSet, iter: 0 i: 18, pairs changed 13
     fullSet, iter: 0 i: 19, pairs changed 14
     fullSet, iter: 0 i: 20, pairs changed 14
     fullSet, iter: 0 i: 21, pairs changed 15
+    j not moving enough
     fullSet, iter: 0 i: 22, pairs changed 15
+    j not moving enough
     fullSet, iter: 0 i: 23, pairs changed 15
     fullSet, iter: 0 i: 24, pairs changed 16
-    j not moving enough
     fullSet, iter: 0 i: 25, pairs changed 16
-    fullSet, iter: 0 i: 26, pairs changed 16
+    fullSet, iter: 0 i: 26, pairs changed 17
+    fullSet, iter: 0 i: 27, pairs changed 18
+    fullSet, iter: 0 i: 28, pairs changed 19
+    fullSet, iter: 0 i: 29, pairs changed 20
+    fullSet, iter: 0 i: 30, pairs changed 20
+    fullSet, iter: 0 i: 31, pairs changed 21
+    fullSet, iter: 0 i: 32, pairs changed 21
+    fullSet, iter: 0 i: 33, pairs changed 21
+    fullSet, iter: 0 i: 34, pairs changed 21
+    fullSet, iter: 0 i: 35, pairs changed 21
+    fullSet, iter: 0 i: 36, pairs changed 22
+    fullSet, iter: 0 i: 37, pairs changed 22
+    fullSet, iter: 0 i: 38, pairs changed 22
+    fullSet, iter: 0 i: 39, pairs changed 22
     j not moving enough
-    fullSet, iter: 0 i: 27, pairs changed 16
-    fullSet, iter: 0 i: 28, pairs changed 17
-    fullSet, iter: 0 i: 29, pairs changed 18
-    fullSet, iter: 0 i: 30, pairs changed 18
-    fullSet, iter: 0 i: 31, pairs changed 19
-    fullSet, iter: 0 i: 32, pairs changed 19
-    fullSet, iter: 0 i: 33, pairs changed 19
-    fullSet, iter: 0 i: 34, pairs changed 20
-    fullSet, iter: 0 i: 35, pairs changed 20
-    fullSet, iter: 0 i: 36, pairs changed 21
-    fullSet, iter: 0 i: 37, pairs changed 21
-    fullSet, iter: 0 i: 38, pairs changed 21
-    fullSet, iter: 0 i: 39, pairs changed 21
-    fullSet, iter: 0 i: 40, pairs changed 21
-    fullSet, iter: 0 i: 41, pairs changed 22
-    fullSet, iter: 0 i: 42, pairs changed 23
+    fullSet, iter: 0 i: 40, pairs changed 22
+    fullSet, iter: 0 i: 41, pairs changed 23
     L == H
+    fullSet, iter: 0 i: 42, pairs changed 23
     fullSet, iter: 0 i: 43, pairs changed 23
     fullSet, iter: 0 i: 44, pairs changed 23
     fullSet, iter: 0 i: 45, pairs changed 24
-    fullSet, iter: 0 i: 46, pairs changed 25
-    fullSet, iter: 0 i: 47, pairs changed 25
-    fullSet, iter: 0 i: 48, pairs changed 25
-    fullSet, iter: 0 i: 49, pairs changed 25
-    j not moving enough
+    L == H
+    fullSet, iter: 0 i: 46, pairs changed 24
+    fullSet, iter: 0 i: 47, pairs changed 24
+    L == H
+    fullSet, iter: 0 i: 48, pairs changed 24
+    fullSet, iter: 0 i: 49, pairs changed 24
     fullSet, iter: 0 i: 50, pairs changed 25
     fullSet, iter: 0 i: 51, pairs changed 25
+    j not moving enough
     fullSet, iter: 0 i: 52, pairs changed 25
     L == H
     fullSet, iter: 0 i: 53, pairs changed 25
-    fullSet, iter: 0 i: 54, pairs changed 25
-    fullSet, iter: 0 i: 55, pairs changed 25
-    fullSet, iter: 0 i: 56, pairs changed 26
-    fullSet, iter: 0 i: 57, pairs changed 26
-    fullSet, iter: 0 i: 58, pairs changed 26
-    fullSet, iter: 0 i: 59, pairs changed 26
-    j not moving enough
-    fullSet, iter: 0 i: 60, pairs changed 26
+    fullSet, iter: 0 i: 54, pairs changed 26
+    fullSet, iter: 0 i: 55, pairs changed 26
+    fullSet, iter: 0 i: 56, pairs changed 27
+    fullSet, iter: 0 i: 57, pairs changed 27
+    fullSet, iter: 0 i: 58, pairs changed 27
+    fullSet, iter: 0 i: 59, pairs changed 27
+    fullSet, iter: 0 i: 60, pairs changed 27
     fullSet, iter: 0 i: 61, pairs changed 27
     fullSet, iter: 0 i: 62, pairs changed 28
     fullSet, iter: 0 i: 63, pairs changed 28
@@ -5954,327 +3476,410 @@ testRbf()
     fullSet, iter: 0 i: 71, pairs changed 28
     fullSet, iter: 0 i: 72, pairs changed 28
     fullSet, iter: 0 i: 73, pairs changed 28
-    fullSet, iter: 0 i: 74, pairs changed 29
-    fullSet, iter: 0 i: 75, pairs changed 29
-    fullSet, iter: 0 i: 76, pairs changed 29
-    fullSet, iter: 0 i: 77, pairs changed 29
-    fullSet, iter: 0 i: 78, pairs changed 29
-    fullSet, iter: 0 i: 79, pairs changed 29
     j not moving enough
-    fullSet, iter: 0 i: 80, pairs changed 29
-    fullSet, iter: 0 i: 81, pairs changed 29
+    fullSet, iter: 0 i: 74, pairs changed 28
+    fullSet, iter: 0 i: 75, pairs changed 28
     L == H
-    fullSet, iter: 0 i: 82, pairs changed 29
-    fullSet, iter: 0 i: 83, pairs changed 29
-    fullSet, iter: 0 i: 84, pairs changed 29
-    fullSet, iter: 0 i: 85, pairs changed 29
-    fullSet, iter: 0 i: 86, pairs changed 29
-    fullSet, iter: 0 i: 87, pairs changed 29
-    fullSet, iter: 0 i: 88, pairs changed 29
-    fullSet, iter: 0 i: 89, pairs changed 29
-    fullSet, iter: 0 i: 90, pairs changed 29
-    fullSet, iter: 0 i: 91, pairs changed 29
-    fullSet, iter: 0 i: 92, pairs changed 29
-    fullSet, iter: 0 i: 93, pairs changed 29
-    fullSet, iter: 0 i: 94, pairs changed 29
-    fullSet, iter: 0 i: 95, pairs changed 29
+    fullSet, iter: 0 i: 76, pairs changed 28
+    fullSet, iter: 0 i: 77, pairs changed 28
     L == H
-    fullSet, iter: 0 i: 96, pairs changed 29
-    fullSet, iter: 0 i: 97, pairs changed 29
-    fullSet, iter: 0 i: 98, pairs changed 29
+    fullSet, iter: 0 i: 78, pairs changed 28
+    fullSet, iter: 0 i: 79, pairs changed 28
+    fullSet, iter: 0 i: 80, pairs changed 28
     L == H
-    fullSet, iter: 0 i: 99, pairs changed 29
+    fullSet, iter: 0 i: 81, pairs changed 28
+    fullSet, iter: 0 i: 82, pairs changed 28
+    fullSet, iter: 0 i: 83, pairs changed 28
+    fullSet, iter: 0 i: 84, pairs changed 28
+    L == H
+    fullSet, iter: 0 i: 85, pairs changed 28
+    fullSet, iter: 0 i: 86, pairs changed 28
+    L == H
+    fullSet, iter: 0 i: 87, pairs changed 28
+    fullSet, iter: 0 i: 88, pairs changed 28
+    fullSet, iter: 0 i: 89, pairs changed 28
+    L == H
+    fullSet, iter: 0 i: 90, pairs changed 28
+    fullSet, iter: 0 i: 91, pairs changed 28
+    L == H
+    fullSet, iter: 0 i: 92, pairs changed 28
+    fullSet, iter: 0 i: 93, pairs changed 28
+    fullSet, iter: 0 i: 94, pairs changed 28
+    fullSet, iter: 0 i: 95, pairs changed 28
+    fullSet, iter: 0 i: 96, pairs changed 28
+    fullSet, iter: 0 i: 97, pairs changed 28
+    fullSet, iter: 0 i: 98, pairs changed 28
+    fullSet, iter: 0 i: 99, pairs changed 28
     iteration number: 1
     j not moving enough
     non-bound, iter: 1 i: 0, pairs changed 0
     j not moving enough
     non-bound, iter: 1 i: 1, pairs changed 0
-    non-bound, iter: 1 i: 2, pairs changed 1
     j not moving enough
-    non-bound, iter: 1 i: 3, pairs changed 1
+    non-bound, iter: 1 i: 3, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 6, pairs changed 1
-    non-bound, iter: 1 i: 8, pairs changed 2
+    non-bound, iter: 1 i: 10, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 10, pairs changed 2
-    non-bound, iter: 1 i: 11, pairs changed 3
+    non-bound, iter: 1 i: 11, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 14, pairs changed 3
-    non-bound, iter: 1 i: 15, pairs changed 4
+    non-bound, iter: 1 i: 13, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 16, pairs changed 4
+    non-bound, iter: 1 i: 14, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 18, pairs changed 4
+    non-bound, iter: 1 i: 15, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 19, pairs changed 4
+    non-bound, iter: 1 i: 16, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 21, pairs changed 4
+    non-bound, iter: 1 i: 17, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 27, pairs changed 4
+    non-bound, iter: 1 i: 18, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 28, pairs changed 4
-    non-bound, iter: 1 i: 29, pairs changed 5
+    non-bound, iter: 1 i: 19, pairs changed 0
+    non-bound, iter: 1 i: 21, pairs changed 0
     j not moving enough
-    non-bound, iter: 1 i: 31, pairs changed 5
+    non-bound, iter: 1 i: 24, pairs changed 0
+    non-bound, iter: 1 i: 26, pairs changed 1
+    non-bound, iter: 1 i: 27, pairs changed 2
     j not moving enough
-    non-bound, iter: 1 i: 34, pairs changed 5
+    non-bound, iter: 1 i: 28, pairs changed 2
     j not moving enough
-    non-bound, iter: 1 i: 36, pairs changed 5
+    non-bound, iter: 1 i: 29, pairs changed 2
     j not moving enough
-    non-bound, iter: 1 i: 41, pairs changed 5
+    non-bound, iter: 1 i: 31, pairs changed 2
     j not moving enough
-    non-bound, iter: 1 i: 42, pairs changed 5
+    non-bound, iter: 1 i: 36, pairs changed 2
     j not moving enough
-    non-bound, iter: 1 i: 45, pairs changed 5
+    non-bound, iter: 1 i: 41, pairs changed 2
     j not moving enough
-    non-bound, iter: 1 i: 46, pairs changed 5
+    non-bound, iter: 1 i: 42, pairs changed 2
+    non-bound, iter: 1 i: 45, pairs changed 3
     j not moving enough
-    non-bound, iter: 1 i: 56, pairs changed 5
+    non-bound, iter: 1 i: 50, pairs changed 3
     j not moving enough
-    non-bound, iter: 1 i: 61, pairs changed 5
+    non-bound, iter: 1 i: 54, pairs changed 3
     j not moving enough
-    non-bound, iter: 1 i: 62, pairs changed 5
-    non-bound, iter: 1 i: 74, pairs changed 6
+    non-bound, iter: 1 i: 56, pairs changed 3
+    j not moving enough
+    non-bound, iter: 1 i: 62, pairs changed 3
     iteration number: 2
-    non-bound, iter: 2 i: 0, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 2, pairs changed 1
+    non-bound, iter: 2 i: 0, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 3, pairs changed 1
+    non-bound, iter: 2 i: 1, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 6, pairs changed 1
+    non-bound, iter: 2 i: 3, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 10, pairs changed 1
+    non-bound, iter: 2 i: 10, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 14, pairs changed 1
-    non-bound, iter: 2 i: 15, pairs changed 2
+    non-bound, iter: 2 i: 11, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 16, pairs changed 2
+    non-bound, iter: 2 i: 13, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 18, pairs changed 2
+    non-bound, iter: 2 i: 14, pairs changed 0
+    non-bound, iter: 2 i: 15, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 19, pairs changed 2
+    non-bound, iter: 2 i: 16, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 21, pairs changed 2
+    non-bound, iter: 2 i: 17, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 27, pairs changed 2
+    non-bound, iter: 2 i: 18, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 28, pairs changed 2
-    non-bound, iter: 2 i: 29, pairs changed 3
+    non-bound, iter: 2 i: 19, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 31, pairs changed 3
+    non-bound, iter: 2 i: 21, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 34, pairs changed 3
+    non-bound, iter: 2 i: 26, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 36, pairs changed 3
+    non-bound, iter: 2 i: 27, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 41, pairs changed 3
+    non-bound, iter: 2 i: 28, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 42, pairs changed 3
+    non-bound, iter: 2 i: 29, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 45, pairs changed 3
+    non-bound, iter: 2 i: 31, pairs changed 1
     j not moving enough
-    non-bound, iter: 2 i: 46, pairs changed 3
+    non-bound, iter: 2 i: 36, pairs changed 1
     j not moving enough
+    non-bound, iter: 2 i: 41, pairs changed 1
+    j not moving enough
+    non-bound, iter: 2 i: 42, pairs changed 1
+    non-bound, iter: 2 i: 45, pairs changed 2
+    j not moving enough
+    non-bound, iter: 2 i: 50, pairs changed 2
+    j not moving enough
+    non-bound, iter: 2 i: 54, pairs changed 2
     non-bound, iter: 2 i: 56, pairs changed 3
-    j not moving enough
-    non-bound, iter: 2 i: 61, pairs changed 3
     j not moving enough
     non-bound, iter: 2 i: 62, pairs changed 3
     j not moving enough
-    non-bound, iter: 2 i: 74, pairs changed 3
+    non-bound, iter: 2 i: 76, pairs changed 3
     iteration number: 3
+    non-bound, iter: 3 i: 0, pairs changed 1
     j not moving enough
-    non-bound, iter: 3 i: 2, pairs changed 0
+    non-bound, iter: 3 i: 1, pairs changed 1
     j not moving enough
-    non-bound, iter: 3 i: 3, pairs changed 0
+    non-bound, iter: 3 i: 3, pairs changed 1
     j not moving enough
-    non-bound, iter: 3 i: 6, pairs changed 0
+    non-bound, iter: 3 i: 10, pairs changed 1
+    non-bound, iter: 3 i: 11, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 10, pairs changed 0
+    non-bound, iter: 3 i: 13, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 14, pairs changed 0
+    non-bound, iter: 3 i: 14, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 15, pairs changed 0
+    non-bound, iter: 3 i: 16, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 16, pairs changed 0
+    non-bound, iter: 3 i: 17, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 18, pairs changed 0
+    non-bound, iter: 3 i: 18, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 19, pairs changed 0
-    non-bound, iter: 3 i: 21, pairs changed 0
+    non-bound, iter: 3 i: 19, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 27, pairs changed 0
+    non-bound, iter: 3 i: 21, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 28, pairs changed 0
-    non-bound, iter: 3 i: 29, pairs changed 0
+    non-bound, iter: 3 i: 26, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 31, pairs changed 0
+    non-bound, iter: 3 i: 27, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 34, pairs changed 0
+    non-bound, iter: 3 i: 28, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 36, pairs changed 0
+    non-bound, iter: 3 i: 29, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 41, pairs changed 0
+    non-bound, iter: 3 i: 31, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 42, pairs changed 0
+    non-bound, iter: 3 i: 36, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 45, pairs changed 0
+    non-bound, iter: 3 i: 41, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 46, pairs changed 0
+    non-bound, iter: 3 i: 42, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 56, pairs changed 0
+    non-bound, iter: 3 i: 45, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 61, pairs changed 0
+    non-bound, iter: 3 i: 50, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 62, pairs changed 0
+    non-bound, iter: 3 i: 54, pairs changed 2
     j not moving enough
-    non-bound, iter: 3 i: 74, pairs changed 0
+    non-bound, iter: 3 i: 56, pairs changed 2
+    j not moving enough
+    non-bound, iter: 3 i: 62, pairs changed 2
+    j not moving enough
+    non-bound, iter: 3 i: 76, pairs changed 2
+    j not moving enough
+    non-bound, iter: 3 i: 87, pairs changed 2
     iteration number: 4
     j not moving enough
-    fullSet, iter: 4 i: 0, pairs changed 0
-    fullSet, iter: 4 i: 1, pairs changed 0
+    non-bound, iter: 4 i: 0, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 2, pairs changed 0
+    non-bound, iter: 4 i: 1, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 3, pairs changed 0
-    fullSet, iter: 4 i: 4, pairs changed 0
-    fullSet, iter: 4 i: 5, pairs changed 0
+    non-bound, iter: 4 i: 3, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 6, pairs changed 0
-    fullSet, iter: 4 i: 7, pairs changed 0
-    fullSet, iter: 4 i: 8, pairs changed 0
-    fullSet, iter: 4 i: 9, pairs changed 0
+    non-bound, iter: 4 i: 10, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 10, pairs changed 0
-    fullSet, iter: 4 i: 11, pairs changed 0
-    fullSet, iter: 4 i: 12, pairs changed 0
-    fullSet, iter: 4 i: 13, pairs changed 0
+    non-bound, iter: 4 i: 13, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 14, pairs changed 0
+    non-bound, iter: 4 i: 14, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 15, pairs changed 0
+    non-bound, iter: 4 i: 16, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 16, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 17, pairs changed 0
+    non-bound, iter: 4 i: 17, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 18, pairs changed 0
+    non-bound, iter: 4 i: 18, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 19, pairs changed 0
-    fullSet, iter: 4 i: 20, pairs changed 0
-    fullSet, iter: 4 i: 21, pairs changed 0
-    fullSet, iter: 4 i: 22, pairs changed 0
-    fullSet, iter: 4 i: 23, pairs changed 0
-    fullSet, iter: 4 i: 24, pairs changed 0
-    fullSet, iter: 4 i: 25, pairs changed 0
+    non-bound, iter: 4 i: 19, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 26, pairs changed 0
+    non-bound, iter: 4 i: 21, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 27, pairs changed 0
+    non-bound, iter: 4 i: 26, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 28, pairs changed 0
-    fullSet, iter: 4 i: 29, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 30, pairs changed 0
+    non-bound, iter: 4 i: 27, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 31, pairs changed 0
-    fullSet, iter: 4 i: 32, pairs changed 0
-    fullSet, iter: 4 i: 33, pairs changed 0
+    non-bound, iter: 4 i: 28, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 34, pairs changed 0
-    fullSet, iter: 4 i: 35, pairs changed 0
+    non-bound, iter: 4 i: 29, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 36, pairs changed 0
-    fullSet, iter: 4 i: 37, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 38, pairs changed 0
-    fullSet, iter: 4 i: 39, pairs changed 0
-    fullSet, iter: 4 i: 40, pairs changed 0
+    non-bound, iter: 4 i: 31, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 41, pairs changed 0
+    non-bound, iter: 4 i: 36, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 42, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 43, pairs changed 0
-    fullSet, iter: 4 i: 44, pairs changed 0
+    non-bound, iter: 4 i: 41, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 45, pairs changed 0
+    non-bound, iter: 4 i: 42, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 46, pairs changed 0
-    fullSet, iter: 4 i: 47, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 48, pairs changed 0
-    fullSet, iter: 4 i: 49, pairs changed 0
-    fullSet, iter: 4 i: 50, pairs changed 0
-    fullSet, iter: 4 i: 51, pairs changed 0
-    fullSet, iter: 4 i: 52, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 53, pairs changed 0
-    fullSet, iter: 4 i: 54, pairs changed 0
-    fullSet, iter: 4 i: 55, pairs changed 0
+    non-bound, iter: 4 i: 45, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 56, pairs changed 0
-    fullSet, iter: 4 i: 57, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 58, pairs changed 0
-    fullSet, iter: 4 i: 59, pairs changed 0
-    fullSet, iter: 4 i: 60, pairs changed 0
+    non-bound, iter: 4 i: 50, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 61, pairs changed 0
+    non-bound, iter: 4 i: 54, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 62, pairs changed 0
-    fullSet, iter: 4 i: 63, pairs changed 0
-    fullSet, iter: 4 i: 64, pairs changed 0
-    fullSet, iter: 4 i: 65, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 66, pairs changed 0
-    fullSet, iter: 4 i: 67, pairs changed 0
-    fullSet, iter: 4 i: 68, pairs changed 0
-    fullSet, iter: 4 i: 69, pairs changed 0
-    fullSet, iter: 4 i: 70, pairs changed 0
-    fullSet, iter: 4 i: 71, pairs changed 0
-    fullSet, iter: 4 i: 72, pairs changed 0
-    fullSet, iter: 4 i: 73, pairs changed 0
+    non-bound, iter: 4 i: 56, pairs changed 0
     j not moving enough
-    fullSet, iter: 4 i: 74, pairs changed 0
-    fullSet, iter: 4 i: 75, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 76, pairs changed 0
-    fullSet, iter: 4 i: 77, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 78, pairs changed 0
-    fullSet, iter: 4 i: 79, pairs changed 0
-    fullSet, iter: 4 i: 80, pairs changed 0
-    fullSet, iter: 4 i: 81, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 82, pairs changed 0
-    fullSet, iter: 4 i: 83, pairs changed 0
-    fullSet, iter: 4 i: 84, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 85, pairs changed 0
-    fullSet, iter: 4 i: 86, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 87, pairs changed 0
-    fullSet, iter: 4 i: 88, pairs changed 0
-    fullSet, iter: 4 i: 89, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 90, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 91, pairs changed 0
-    L == H
-    fullSet, iter: 4 i: 92, pairs changed 0
-    fullSet, iter: 4 i: 93, pairs changed 0
-    fullSet, iter: 4 i: 94, pairs changed 0
-    fullSet, iter: 4 i: 95, pairs changed 0
-    fullSet, iter: 4 i: 96, pairs changed 0
-    fullSet, iter: 4 i: 97, pairs changed 0
-    fullSet, iter: 4 i: 98, pairs changed 0
-    fullSet, iter: 4 i: 99, pairs changed 0
+    non-bound, iter: 4 i: 62, pairs changed 0
+    j not moving enough
+    non-bound, iter: 4 i: 76, pairs changed 0
+    j not moving enough
+    non-bound, iter: 4 i: 87, pairs changed 0
     iteration number: 5
-    there are 24 Support Vectors
-    the training error rate is: 0.070000
-    the test error rate is: 0.050000
+    j not moving enough
+    fullSet, iter: 5 i: 0, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 1, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 2, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 3, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 4, pairs changed 0
+    fullSet, iter: 5 i: 5, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 6, pairs changed 0
+    fullSet, iter: 5 i: 7, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 8, pairs changed 0
+    fullSet, iter: 5 i: 9, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 10, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 11, pairs changed 0
+    fullSet, iter: 5 i: 12, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 13, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 14, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 15, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 16, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 17, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 18, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 19, pairs changed 0
+    fullSet, iter: 5 i: 20, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 21, pairs changed 0
+    fullSet, iter: 5 i: 22, pairs changed 0
+    fullSet, iter: 5 i: 23, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 24, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 25, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 26, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 27, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 28, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 29, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 30, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 31, pairs changed 0
+    fullSet, iter: 5 i: 32, pairs changed 0
+    fullSet, iter: 5 i: 33, pairs changed 0
+    fullSet, iter: 5 i: 34, pairs changed 0
+    fullSet, iter: 5 i: 35, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 36, pairs changed 0
+    fullSet, iter: 5 i: 37, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 38, pairs changed 0
+    fullSet, iter: 5 i: 39, pairs changed 0
+    fullSet, iter: 5 i: 40, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 41, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 42, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 43, pairs changed 0
+    fullSet, iter: 5 i: 44, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 45, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 46, pairs changed 0
+    fullSet, iter: 5 i: 47, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 48, pairs changed 0
+    fullSet, iter: 5 i: 49, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 50, pairs changed 0
+    fullSet, iter: 5 i: 51, pairs changed 0
+    fullSet, iter: 5 i: 52, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 53, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 54, pairs changed 0
+    fullSet, iter: 5 i: 55, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 56, pairs changed 0
+    fullSet, iter: 5 i: 57, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 58, pairs changed 0
+    fullSet, iter: 5 i: 59, pairs changed 0
+    fullSet, iter: 5 i: 60, pairs changed 0
+    fullSet, iter: 5 i: 61, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 62, pairs changed 0
+    fullSet, iter: 5 i: 63, pairs changed 0
+    fullSet, iter: 5 i: 64, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 65, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 66, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 67, pairs changed 0
+    fullSet, iter: 5 i: 68, pairs changed 0
+    fullSet, iter: 5 i: 69, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 70, pairs changed 0
+    fullSet, iter: 5 i: 71, pairs changed 0
+    fullSet, iter: 5 i: 72, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 73, pairs changed 0
+    fullSet, iter: 5 i: 74, pairs changed 0
+    fullSet, iter: 5 i: 75, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 76, pairs changed 0
+    fullSet, iter: 5 i: 77, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 78, pairs changed 0
+    fullSet, iter: 5 i: 79, pairs changed 0
+    fullSet, iter: 5 i: 80, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 81, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 82, pairs changed 0
+    fullSet, iter: 5 i: 83, pairs changed 0
+    fullSet, iter: 5 i: 84, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 85, pairs changed 0
+    fullSet, iter: 5 i: 86, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 87, pairs changed 0
+    fullSet, iter: 5 i: 88, pairs changed 0
+    fullSet, iter: 5 i: 89, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 90, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 91, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 92, pairs changed 0
+    fullSet, iter: 5 i: 93, pairs changed 0
+    fullSet, iter: 5 i: 94, pairs changed 0
+    fullSet, iter: 5 i: 95, pairs changed 0
+    L == H
+    fullSet, iter: 5 i: 96, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 97, pairs changed 0
+    fullSet, iter: 5 i: 98, pairs changed 0
+    j not moving enough
+    fullSet, iter: 5 i: 99, pairs changed 0
+    iteration number: 6
+    there are 26 Support Vectors
+    the training error rate is: 0.240000
+    the test error rate is: 0.180000
     
 
 支持向量的数目存在一个最优值。SVM的优点在于它能对数据进行高效分类。
@@ -6320,18 +3925,18 @@ def loadImages(dirName):
         fileStr = fileNameStr.split('.')[0]
         classNumStr = int(fileStr.split('_')[0])
         if classNumStr == 9:
-            hwLabels.append(-1)
+            hwLabels.append([-1])
         else:
-            hwLabels.append(1)
+            hwLabels.append([1])
         trainingMat[i, :] = img2vector('%s/%s' % (dirName, fileNameStr))
     return trainingMat, hwLabels
 
 def testDigits(kTup = ('rbf', 10)):
     dataArr, labelArr = loadImages('trainingDigits')
     b, alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, kTup)
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
-    svInd = nonzero(alphas.A > 0)[0]
+    datMat = array(dataArr)
+    labelMat = array(labelArr)
+    svInd = nonzero(alphas > 0)[0]
     sVs = datMat[svInd]
     labelSV = labelMat[svInd]
     print('there are %d Support Vectors' % shape(sVs)[0])
@@ -6339,18 +3944,17 @@ def testDigits(kTup = ('rbf', 10)):
     errorCount = 0
     for i in range(m):
         kernelEval = kernelTrans(sVs, datMat[i, :], kTup)
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
+        predict = dot(kernelEval.T, (labelSV * alphas[svInd])) + b
         if sign(predict) != sign(labelArr[i]):
             errorCount += 1
     print('the training error rate is %f' % (float(errorCount) / m))
     dataArr, labelArr = loadImages('testDigits')
     errorCount = 0
-    datMat = mat(dataArr)
-    labelMat = mat(labelArr).T
+    datMat = array(dataArr)
     m, n = shape(datMat)
     for i in range(m):
         kernelEval = kernelTrans(sVs, datMat[i, :], kTup)
-        predict = kernelEval.T * multiply(labelSV, alphas[svInd]) + b
+        predict = dot(kernelEval.T, (labelSV * alphas[svInd])) + b
         if sign(predict) != sign(labelArr[i]):
             errorCount += 1
     print('the test error rate is %f' % (float(errorCount) / m))
@@ -6358,600 +3962,677 @@ def testDigits(kTup = ('rbf', 10)):
 testDigits(('rbf', 20))
 ```
 
-    fullSet, iter: 0 i: 0, pairs changed 1
-    fullSet, iter: 0 i: 1, pairs changed 2
-    fullSet, iter: 0 i: 2, pairs changed 3
-    fullSet, iter: 0 i: 3, pairs changed 4
-    fullSet, iter: 0 i: 4, pairs changed 5
-    fullSet, iter: 0 i: 5, pairs changed 6
-    fullSet, iter: 0 i: 6, pairs changed 6
-    fullSet, iter: 0 i: 7, pairs changed 7
-    fullSet, iter: 0 i: 8, pairs changed 7
-    fullSet, iter: 0 i: 9, pairs changed 7
-    fullSet, iter: 0 i: 10, pairs changed 7
-    fullSet, iter: 0 i: 11, pairs changed 7
-    fullSet, iter: 0 i: 12, pairs changed 8
-    fullSet, iter: 0 i: 13, pairs changed 9
-    fullSet, iter: 0 i: 14, pairs changed 10
+    L == H
+    fullSet, iter: 0 i: 0, pairs changed 0
+    fullSet, iter: 0 i: 1, pairs changed 1
+    fullSet, iter: 0 i: 2, pairs changed 2
+    fullSet, iter: 0 i: 3, pairs changed 3
+    fullSet, iter: 0 i: 4, pairs changed 3
+    fullSet, iter: 0 i: 5, pairs changed 4
+    fullSet, iter: 0 i: 6, pairs changed 5
+    fullSet, iter: 0 i: 7, pairs changed 6
+    fullSet, iter: 0 i: 8, pairs changed 6
+    fullSet, iter: 0 i: 9, pairs changed 6
+    fullSet, iter: 0 i: 10, pairs changed 6
+    fullSet, iter: 0 i: 11, pairs changed 6
+    fullSet, iter: 0 i: 12, pairs changed 7
+    fullSet, iter: 0 i: 13, pairs changed 8
+    fullSet, iter: 0 i: 14, pairs changed 9
     j not moving enough
-    fullSet, iter: 0 i: 15, pairs changed 10
+    fullSet, iter: 0 i: 15, pairs changed 9
     fullSet, iter: 0 i: 16, pairs changed 10
     fullSet, iter: 0 i: 17, pairs changed 10
+    j not moving enough
     fullSet, iter: 0 i: 18, pairs changed 10
-    fullSet, iter: 0 i: 19, pairs changed 10
-    fullSet, iter: 0 i: 20, pairs changed 10
-    j not moving enough
-    fullSet, iter: 0 i: 21, pairs changed 10
-    fullSet, iter: 0 i: 22, pairs changed 10
-    fullSet, iter: 0 i: 23, pairs changed 10
-    fullSet, iter: 0 i: 24, pairs changed 11
-    fullSet, iter: 0 i: 25, pairs changed 12
-    fullSet, iter: 0 i: 26, pairs changed 12
-    fullSet, iter: 0 i: 27, pairs changed 12
-    fullSet, iter: 0 i: 28, pairs changed 12
-    fullSet, iter: 0 i: 29, pairs changed 12
-    j not moving enough
-    fullSet, iter: 0 i: 30, pairs changed 12
-    fullSet, iter: 0 i: 31, pairs changed 12
-    fullSet, iter: 0 i: 32, pairs changed 12
-    fullSet, iter: 0 i: 33, pairs changed 12
-    fullSet, iter: 0 i: 34, pairs changed 12
-    fullSet, iter: 0 i: 35, pairs changed 12
-    fullSet, iter: 0 i: 36, pairs changed 12
-    j not moving enough
-    fullSet, iter: 0 i: 37, pairs changed 12
-    fullSet, iter: 0 i: 38, pairs changed 12
-    fullSet, iter: 0 i: 39, pairs changed 12
-    fullSet, iter: 0 i: 40, pairs changed 12
-    fullSet, iter: 0 i: 41, pairs changed 12
+    fullSet, iter: 0 i: 19, pairs changed 11
+    fullSet, iter: 0 i: 20, pairs changed 12
+    fullSet, iter: 0 i: 21, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 22, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 23, pairs changed 13
+    fullSet, iter: 0 i: 24, pairs changed 13
+    fullSet, iter: 0 i: 25, pairs changed 13
+    fullSet, iter: 0 i: 26, pairs changed 13
+    fullSet, iter: 0 i: 27, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 28, pairs changed 13
+    fullSet, iter: 0 i: 29, pairs changed 13
+    fullSet, iter: 0 i: 30, pairs changed 13
+    fullSet, iter: 0 i: 31, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 32, pairs changed 13
+    fullSet, iter: 0 i: 33, pairs changed 13
+    fullSet, iter: 0 i: 34, pairs changed 13
+    fullSet, iter: 0 i: 35, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 36, pairs changed 13
+    fullSet, iter: 0 i: 37, pairs changed 13
+    fullSet, iter: 0 i: 38, pairs changed 13
+    fullSet, iter: 0 i: 39, pairs changed 13
+    fullSet, iter: 0 i: 40, pairs changed 13
+    fullSet, iter: 0 i: 41, pairs changed 13
     fullSet, iter: 0 i: 42, pairs changed 13
     fullSet, iter: 0 i: 43, pairs changed 13
-    fullSet, iter: 0 i: 44, pairs changed 14
-    fullSet, iter: 0 i: 45, pairs changed 14
-    fullSet, iter: 0 i: 46, pairs changed 14
-    fullSet, iter: 0 i: 47, pairs changed 15
-    fullSet, iter: 0 i: 48, pairs changed 15
-    fullSet, iter: 0 i: 49, pairs changed 16
-    fullSet, iter: 0 i: 50, pairs changed 16
-    fullSet, iter: 0 i: 51, pairs changed 16
-    fullSet, iter: 0 i: 52, pairs changed 16
-    fullSet, iter: 0 i: 53, pairs changed 16
-    fullSet, iter: 0 i: 54, pairs changed 16
-    fullSet, iter: 0 i: 55, pairs changed 16
-    fullSet, iter: 0 i: 56, pairs changed 16
-    fullSet, iter: 0 i: 57, pairs changed 16
-    fullSet, iter: 0 i: 58, pairs changed 16
-    fullSet, iter: 0 i: 59, pairs changed 16
-    fullSet, iter: 0 i: 60, pairs changed 16
-    fullSet, iter: 0 i: 61, pairs changed 16
-    fullSet, iter: 0 i: 62, pairs changed 16
-    fullSet, iter: 0 i: 63, pairs changed 17
-    fullSet, iter: 0 i: 64, pairs changed 17
-    fullSet, iter: 0 i: 65, pairs changed 18
-    fullSet, iter: 0 i: 66, pairs changed 19
-    fullSet, iter: 0 i: 67, pairs changed 19
-    fullSet, iter: 0 i: 68, pairs changed 19
-    fullSet, iter: 0 i: 69, pairs changed 19
-    fullSet, iter: 0 i: 70, pairs changed 19
-    fullSet, iter: 0 i: 71, pairs changed 19
-    fullSet, iter: 0 i: 72, pairs changed 19
-    fullSet, iter: 0 i: 73, pairs changed 19
-    fullSet, iter: 0 i: 74, pairs changed 19
-    fullSet, iter: 0 i: 75, pairs changed 19
-    fullSet, iter: 0 i: 76, pairs changed 19
-    fullSet, iter: 0 i: 77, pairs changed 20
-    fullSet, iter: 0 i: 78, pairs changed 20
-    fullSet, iter: 0 i: 79, pairs changed 20
-    fullSet, iter: 0 i: 80, pairs changed 20
-    fullSet, iter: 0 i: 81, pairs changed 21
-    fullSet, iter: 0 i: 82, pairs changed 21
-    fullSet, iter: 0 i: 83, pairs changed 21
-    fullSet, iter: 0 i: 84, pairs changed 21
     L == H
-    fullSet, iter: 0 i: 85, pairs changed 21
-    fullSet, iter: 0 i: 86, pairs changed 21
-    fullSet, iter: 0 i: 87, pairs changed 21
-    fullSet, iter: 0 i: 88, pairs changed 21
-    fullSet, iter: 0 i: 89, pairs changed 21
-    fullSet, iter: 0 i: 90, pairs changed 21
-    fullSet, iter: 0 i: 91, pairs changed 21
-    fullSet, iter: 0 i: 92, pairs changed 21
-    fullSet, iter: 0 i: 93, pairs changed 21
-    fullSet, iter: 0 i: 94, pairs changed 21
-    fullSet, iter: 0 i: 95, pairs changed 21
-    fullSet, iter: 0 i: 96, pairs changed 21
-    fullSet, iter: 0 i: 97, pairs changed 21
-    fullSet, iter: 0 i: 98, pairs changed 21
-    fullSet, iter: 0 i: 99, pairs changed 21
-    fullSet, iter: 0 i: 100, pairs changed 21
-    fullSet, iter: 0 i: 101, pairs changed 21
-    fullSet, iter: 0 i: 102, pairs changed 21
-    fullSet, iter: 0 i: 103, pairs changed 21
-    fullSet, iter: 0 i: 104, pairs changed 21
+    fullSet, iter: 0 i: 44, pairs changed 13
     L == H
-    fullSet, iter: 0 i: 105, pairs changed 21
-    fullSet, iter: 0 i: 106, pairs changed 21
-    fullSet, iter: 0 i: 107, pairs changed 21
-    fullSet, iter: 0 i: 108, pairs changed 21
-    fullSet, iter: 0 i: 109, pairs changed 21
-    fullSet, iter: 0 i: 110, pairs changed 21
-    fullSet, iter: 0 i: 111, pairs changed 21
-    fullSet, iter: 0 i: 112, pairs changed 21
-    fullSet, iter: 0 i: 113, pairs changed 21
-    fullSet, iter: 0 i: 114, pairs changed 21
-    fullSet, iter: 0 i: 115, pairs changed 21
-    fullSet, iter: 0 i: 116, pairs changed 21
-    fullSet, iter: 0 i: 117, pairs changed 21
-    fullSet, iter: 0 i: 118, pairs changed 21
-    fullSet, iter: 0 i: 119, pairs changed 21
-    fullSet, iter: 0 i: 120, pairs changed 21
-    fullSet, iter: 0 i: 121, pairs changed 21
-    fullSet, iter: 0 i: 122, pairs changed 21
-    fullSet, iter: 0 i: 123, pairs changed 21
-    fullSet, iter: 0 i: 124, pairs changed 21
-    fullSet, iter: 0 i: 125, pairs changed 21
-    fullSet, iter: 0 i: 126, pairs changed 21
+    fullSet, iter: 0 i: 45, pairs changed 13
+    fullSet, iter: 0 i: 46, pairs changed 13
     L == H
-    fullSet, iter: 0 i: 127, pairs changed 21
-    fullSet, iter: 0 i: 128, pairs changed 21
-    fullSet, iter: 0 i: 129, pairs changed 21
-    fullSet, iter: 0 i: 130, pairs changed 21
-    fullSet, iter: 0 i: 131, pairs changed 21
-    fullSet, iter: 0 i: 132, pairs changed 21
-    fullSet, iter: 0 i: 133, pairs changed 21
-    fullSet, iter: 0 i: 134, pairs changed 21
-    fullSet, iter: 0 i: 135, pairs changed 21
-    fullSet, iter: 0 i: 136, pairs changed 21
-    fullSet, iter: 0 i: 137, pairs changed 21
-    fullSet, iter: 0 i: 138, pairs changed 21
-    fullSet, iter: 0 i: 139, pairs changed 21
-    fullSet, iter: 0 i: 140, pairs changed 21
-    fullSet, iter: 0 i: 141, pairs changed 21
-    fullSet, iter: 0 i: 142, pairs changed 21
-    fullSet, iter: 0 i: 143, pairs changed 21
-    fullSet, iter: 0 i: 144, pairs changed 21
-    fullSet, iter: 0 i: 145, pairs changed 21
-    fullSet, iter: 0 i: 146, pairs changed 21
-    fullSet, iter: 0 i: 147, pairs changed 21
-    fullSet, iter: 0 i: 148, pairs changed 21
-    fullSet, iter: 0 i: 149, pairs changed 21
-    fullSet, iter: 0 i: 150, pairs changed 21
-    fullSet, iter: 0 i: 151, pairs changed 21
-    fullSet, iter: 0 i: 152, pairs changed 21
-    fullSet, iter: 0 i: 153, pairs changed 21
-    fullSet, iter: 0 i: 154, pairs changed 21
-    fullSet, iter: 0 i: 155, pairs changed 21
-    fullSet, iter: 0 i: 156, pairs changed 21
-    fullSet, iter: 0 i: 157, pairs changed 21
-    fullSet, iter: 0 i: 158, pairs changed 21
-    fullSet, iter: 0 i: 159, pairs changed 21
-    fullSet, iter: 0 i: 160, pairs changed 21
-    fullSet, iter: 0 i: 161, pairs changed 21
-    fullSet, iter: 0 i: 162, pairs changed 21
-    fullSet, iter: 0 i: 163, pairs changed 21
-    fullSet, iter: 0 i: 164, pairs changed 21
-    fullSet, iter: 0 i: 165, pairs changed 21
-    fullSet, iter: 0 i: 166, pairs changed 21
-    fullSet, iter: 0 i: 167, pairs changed 21
-    fullSet, iter: 0 i: 168, pairs changed 21
-    fullSet, iter: 0 i: 169, pairs changed 21
-    fullSet, iter: 0 i: 170, pairs changed 21
-    fullSet, iter: 0 i: 171, pairs changed 21
-    fullSet, iter: 0 i: 172, pairs changed 21
-    fullSet, iter: 0 i: 173, pairs changed 21
-    fullSet, iter: 0 i: 174, pairs changed 21
-    fullSet, iter: 0 i: 175, pairs changed 21
-    fullSet, iter: 0 i: 176, pairs changed 21
-    fullSet, iter: 0 i: 177, pairs changed 21
-    fullSet, iter: 0 i: 178, pairs changed 21
-    fullSet, iter: 0 i: 179, pairs changed 21
-    fullSet, iter: 0 i: 180, pairs changed 21
-    fullSet, iter: 0 i: 181, pairs changed 21
-    fullSet, iter: 0 i: 182, pairs changed 21
-    fullSet, iter: 0 i: 183, pairs changed 21
-    fullSet, iter: 0 i: 184, pairs changed 21
-    fullSet, iter: 0 i: 185, pairs changed 21
-    fullSet, iter: 0 i: 186, pairs changed 21
-    fullSet, iter: 0 i: 187, pairs changed 21
-    fullSet, iter: 0 i: 188, pairs changed 21
-    fullSet, iter: 0 i: 189, pairs changed 21
-    fullSet, iter: 0 i: 190, pairs changed 21
-    fullSet, iter: 0 i: 191, pairs changed 21
-    fullSet, iter: 0 i: 192, pairs changed 21
-    fullSet, iter: 0 i: 193, pairs changed 21
-    fullSet, iter: 0 i: 194, pairs changed 21
-    fullSet, iter: 0 i: 195, pairs changed 21
-    fullSet, iter: 0 i: 196, pairs changed 21
-    fullSet, iter: 0 i: 197, pairs changed 21
-    fullSet, iter: 0 i: 198, pairs changed 22
-    fullSet, iter: 0 i: 199, pairs changed 23
-    fullSet, iter: 0 i: 200, pairs changed 24
-    fullSet, iter: 0 i: 201, pairs changed 25
-    fullSet, iter: 0 i: 202, pairs changed 26
-    fullSet, iter: 0 i: 203, pairs changed 27
-    fullSet, iter: 0 i: 204, pairs changed 28
-    fullSet, iter: 0 i: 205, pairs changed 29
-    fullSet, iter: 0 i: 206, pairs changed 29
-    fullSet, iter: 0 i: 207, pairs changed 30
-    fullSet, iter: 0 i: 208, pairs changed 31
-    fullSet, iter: 0 i: 209, pairs changed 32
-    fullSet, iter: 0 i: 210, pairs changed 33
-    fullSet, iter: 0 i: 211, pairs changed 34
-    fullSet, iter: 0 i: 212, pairs changed 34
-    fullSet, iter: 0 i: 213, pairs changed 34
-    fullSet, iter: 0 i: 214, pairs changed 34
-    fullSet, iter: 0 i: 215, pairs changed 35
-    fullSet, iter: 0 i: 216, pairs changed 36
-    fullSet, iter: 0 i: 217, pairs changed 36
+    fullSet, iter: 0 i: 47, pairs changed 13
+    fullSet, iter: 0 i: 48, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 49, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 50, pairs changed 13
+    fullSet, iter: 0 i: 51, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 52, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 53, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 54, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 55, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 56, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 57, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 58, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 59, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 60, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 61, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 62, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 63, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 64, pairs changed 13
+    fullSet, iter: 0 i: 65, pairs changed 13
+    fullSet, iter: 0 i: 66, pairs changed 13
+    fullSet, iter: 0 i: 67, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 68, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 69, pairs changed 13
+    fullSet, iter: 0 i: 70, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 71, pairs changed 13
+    fullSet, iter: 0 i: 72, pairs changed 13
+    fullSet, iter: 0 i: 73, pairs changed 13
+    fullSet, iter: 0 i: 74, pairs changed 13
+    fullSet, iter: 0 i: 75, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 76, pairs changed 13
+    fullSet, iter: 0 i: 77, pairs changed 13
+    fullSet, iter: 0 i: 78, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 79, pairs changed 13
+    fullSet, iter: 0 i: 80, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 81, pairs changed 13
+    fullSet, iter: 0 i: 82, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 83, pairs changed 13
+    fullSet, iter: 0 i: 84, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 85, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 86, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 87, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 88, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 89, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 90, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 91, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 92, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 93, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 94, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 95, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 96, pairs changed 13
+    fullSet, iter: 0 i: 97, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 98, pairs changed 13
+    fullSet, iter: 0 i: 99, pairs changed 13
+    fullSet, iter: 0 i: 100, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 101, pairs changed 13
+    fullSet, iter: 0 i: 102, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 103, pairs changed 13
+    fullSet, iter: 0 i: 104, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 105, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 106, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 107, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 108, pairs changed 13
+    fullSet, iter: 0 i: 109, pairs changed 13
+    fullSet, iter: 0 i: 110, pairs changed 13
+    fullSet, iter: 0 i: 111, pairs changed 13
+    fullSet, iter: 0 i: 112, pairs changed 13
+    fullSet, iter: 0 i: 113, pairs changed 13
+    fullSet, iter: 0 i: 114, pairs changed 13
+    fullSet, iter: 0 i: 115, pairs changed 13
+    fullSet, iter: 0 i: 116, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 117, pairs changed 13
+    fullSet, iter: 0 i: 118, pairs changed 13
+    fullSet, iter: 0 i: 119, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 120, pairs changed 13
+    fullSet, iter: 0 i: 121, pairs changed 13
+    fullSet, iter: 0 i: 122, pairs changed 13
+    fullSet, iter: 0 i: 123, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 124, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 125, pairs changed 13
+    fullSet, iter: 0 i: 126, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 127, pairs changed 13
+    fullSet, iter: 0 i: 128, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 129, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 130, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 131, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 132, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 133, pairs changed 13
+    fullSet, iter: 0 i: 134, pairs changed 13
+    fullSet, iter: 0 i: 135, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 136, pairs changed 13
+    fullSet, iter: 0 i: 137, pairs changed 13
+    fullSet, iter: 0 i: 138, pairs changed 13
+    fullSet, iter: 0 i: 139, pairs changed 13
+    fullSet, iter: 0 i: 140, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 141, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 142, pairs changed 13
+    fullSet, iter: 0 i: 143, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 144, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 145, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 146, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 147, pairs changed 13
+    fullSet, iter: 0 i: 148, pairs changed 13
+    fullSet, iter: 0 i: 149, pairs changed 13
+    fullSet, iter: 0 i: 150, pairs changed 13
+    fullSet, iter: 0 i: 151, pairs changed 13
+    fullSet, iter: 0 i: 152, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 153, pairs changed 13
+    fullSet, iter: 0 i: 154, pairs changed 13
+    fullSet, iter: 0 i: 155, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 156, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 157, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 158, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 159, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 160, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 161, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 162, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 163, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 164, pairs changed 13
+    fullSet, iter: 0 i: 165, pairs changed 13
+    fullSet, iter: 0 i: 166, pairs changed 13
+    fullSet, iter: 0 i: 167, pairs changed 13
+    fullSet, iter: 0 i: 168, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 169, pairs changed 13
+    fullSet, iter: 0 i: 170, pairs changed 13
+    fullSet, iter: 0 i: 171, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 172, pairs changed 13
+    fullSet, iter: 0 i: 173, pairs changed 13
+    fullSet, iter: 0 i: 174, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 175, pairs changed 13
+    fullSet, iter: 0 i: 176, pairs changed 13
+    fullSet, iter: 0 i: 177, pairs changed 13
+    fullSet, iter: 0 i: 178, pairs changed 13
+    fullSet, iter: 0 i: 179, pairs changed 13
+    fullSet, iter: 0 i: 180, pairs changed 13
+    fullSet, iter: 0 i: 181, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 182, pairs changed 13
+    fullSet, iter: 0 i: 183, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 184, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 185, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 186, pairs changed 13
+    fullSet, iter: 0 i: 187, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 188, pairs changed 13
+    L == H
+    fullSet, iter: 0 i: 189, pairs changed 13
+    fullSet, iter: 0 i: 190, pairs changed 13
+    fullSet, iter: 0 i: 191, pairs changed 13
+    fullSet, iter: 0 i: 192, pairs changed 13
+    fullSet, iter: 0 i: 193, pairs changed 13
+    fullSet, iter: 0 i: 194, pairs changed 13
+    fullSet, iter: 0 i: 195, pairs changed 13
+    fullSet, iter: 0 i: 196, pairs changed 13
+    fullSet, iter: 0 i: 197, pairs changed 13
+    fullSet, iter: 0 i: 198, pairs changed 14
+    fullSet, iter: 0 i: 199, pairs changed 15
+    fullSet, iter: 0 i: 200, pairs changed 16
+    fullSet, iter: 0 i: 201, pairs changed 17
+    fullSet, iter: 0 i: 202, pairs changed 18
+    fullSet, iter: 0 i: 203, pairs changed 19
+    fullSet, iter: 0 i: 204, pairs changed 20
+    fullSet, iter: 0 i: 205, pairs changed 21
+    fullSet, iter: 0 i: 206, pairs changed 21
+    fullSet, iter: 0 i: 207, pairs changed 22
+    fullSet, iter: 0 i: 208, pairs changed 23
+    fullSet, iter: 0 i: 209, pairs changed 24
+    fullSet, iter: 0 i: 210, pairs changed 25
+    fullSet, iter: 0 i: 211, pairs changed 26
+    fullSet, iter: 0 i: 212, pairs changed 26
+    fullSet, iter: 0 i: 213, pairs changed 26
     j not moving enough
-    fullSet, iter: 0 i: 218, pairs changed 36
-    fullSet, iter: 0 i: 219, pairs changed 36
-    fullSet, iter: 0 i: 220, pairs changed 36
-    fullSet, iter: 0 i: 221, pairs changed 36
-    fullSet, iter: 0 i: 222, pairs changed 37
-    fullSet, iter: 0 i: 223, pairs changed 37
-    fullSet, iter: 0 i: 224, pairs changed 37
-    fullSet, iter: 0 i: 225, pairs changed 38
-    fullSet, iter: 0 i: 226, pairs changed 38
-    fullSet, iter: 0 i: 227, pairs changed 38
-    fullSet, iter: 0 i: 228, pairs changed 38
-    fullSet, iter: 0 i: 229, pairs changed 38
-    fullSet, iter: 0 i: 230, pairs changed 38
-    fullSet, iter: 0 i: 231, pairs changed 38
+    fullSet, iter: 0 i: 214, pairs changed 26
+    fullSet, iter: 0 i: 215, pairs changed 27
     j not moving enough
-    fullSet, iter: 0 i: 232, pairs changed 38
-    fullSet, iter: 0 i: 233, pairs changed 39
-    fullSet, iter: 0 i: 234, pairs changed 40
-    fullSet, iter: 0 i: 235, pairs changed 41
-    fullSet, iter: 0 i: 236, pairs changed 42
+    fullSet, iter: 0 i: 216, pairs changed 27
+    fullSet, iter: 0 i: 217, pairs changed 27
+    fullSet, iter: 0 i: 218, pairs changed 28
+    fullSet, iter: 0 i: 219, pairs changed 28
+    fullSet, iter: 0 i: 220, pairs changed 28
+    fullSet, iter: 0 i: 221, pairs changed 28
+    fullSet, iter: 0 i: 222, pairs changed 29
+    fullSet, iter: 0 i: 223, pairs changed 29
+    fullSet, iter: 0 i: 224, pairs changed 29
     j not moving enough
-    fullSet, iter: 0 i: 237, pairs changed 42
-    fullSet, iter: 0 i: 238, pairs changed 43
-    fullSet, iter: 0 i: 239, pairs changed 43
-    fullSet, iter: 0 i: 240, pairs changed 43
-    fullSet, iter: 0 i: 241, pairs changed 43
-    fullSet, iter: 0 i: 242, pairs changed 44
-    fullSet, iter: 0 i: 243, pairs changed 44
-    fullSet, iter: 0 i: 244, pairs changed 44
-    fullSet, iter: 0 i: 245, pairs changed 45
+    fullSet, iter: 0 i: 225, pairs changed 29
     j not moving enough
-    fullSet, iter: 0 i: 246, pairs changed 45
-    fullSet, iter: 0 i: 247, pairs changed 45
+    fullSet, iter: 0 i: 226, pairs changed 29
     j not moving enough
-    fullSet, iter: 0 i: 248, pairs changed 45
-    fullSet, iter: 0 i: 249, pairs changed 46
-    fullSet, iter: 0 i: 250, pairs changed 46
-    fullSet, iter: 0 i: 251, pairs changed 46
-    fullSet, iter: 0 i: 252, pairs changed 46
-    fullSet, iter: 0 i: 253, pairs changed 46
-    fullSet, iter: 0 i: 254, pairs changed 46
-    fullSet, iter: 0 i: 255, pairs changed 46
-    fullSet, iter: 0 i: 256, pairs changed 46
-    fullSet, iter: 0 i: 257, pairs changed 46
-    fullSet, iter: 0 i: 258, pairs changed 46
-    fullSet, iter: 0 i: 259, pairs changed 46
-    fullSet, iter: 0 i: 260, pairs changed 46
-    fullSet, iter: 0 i: 261, pairs changed 46
-    fullSet, iter: 0 i: 262, pairs changed 46
-    fullSet, iter: 0 i: 263, pairs changed 46
-    fullSet, iter: 0 i: 264, pairs changed 46
-    fullSet, iter: 0 i: 265, pairs changed 46
-    fullSet, iter: 0 i: 266, pairs changed 46
-    fullSet, iter: 0 i: 267, pairs changed 46
-    fullSet, iter: 0 i: 268, pairs changed 46
-    fullSet, iter: 0 i: 269, pairs changed 46
-    fullSet, iter: 0 i: 270, pairs changed 46
-    fullSet, iter: 0 i: 271, pairs changed 46
-    fullSet, iter: 0 i: 272, pairs changed 46
-    fullSet, iter: 0 i: 273, pairs changed 46
-    fullSet, iter: 0 i: 274, pairs changed 46
-    fullSet, iter: 0 i: 275, pairs changed 46
-    fullSet, iter: 0 i: 276, pairs changed 46
-    fullSet, iter: 0 i: 277, pairs changed 46
-    fullSet, iter: 0 i: 278, pairs changed 46
-    fullSet, iter: 0 i: 279, pairs changed 46
-    fullSet, iter: 0 i: 280, pairs changed 46
-    fullSet, iter: 0 i: 281, pairs changed 46
-    fullSet, iter: 0 i: 282, pairs changed 46
-    fullSet, iter: 0 i: 283, pairs changed 46
-    fullSet, iter: 0 i: 284, pairs changed 47
-    fullSet, iter: 0 i: 285, pairs changed 47
-    fullSet, iter: 0 i: 286, pairs changed 47
+    fullSet, iter: 0 i: 227, pairs changed 29
+    fullSet, iter: 0 i: 228, pairs changed 29
+    fullSet, iter: 0 i: 229, pairs changed 29
+    j not moving enough
+    fullSet, iter: 0 i: 230, pairs changed 29
+    fullSet, iter: 0 i: 231, pairs changed 29
+    j not moving enough
+    fullSet, iter: 0 i: 232, pairs changed 29
+    fullSet, iter: 0 i: 233, pairs changed 30
+    j not moving enough
+    fullSet, iter: 0 i: 234, pairs changed 30
+    fullSet, iter: 0 i: 235, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 287, pairs changed 47
-    fullSet, iter: 0 i: 288, pairs changed 47
+    fullSet, iter: 0 i: 236, pairs changed 31
+    j not moving enough
+    fullSet, iter: 0 i: 237, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 289, pairs changed 47
+    fullSet, iter: 0 i: 238, pairs changed 31
+    j not moving enough
+    fullSet, iter: 0 i: 239, pairs changed 31
+    fullSet, iter: 0 i: 240, pairs changed 31
+    fullSet, iter: 0 i: 241, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 290, pairs changed 47
+    fullSet, iter: 0 i: 242, pairs changed 31
+    j not moving enough
+    fullSet, iter: 0 i: 243, pairs changed 31
+    j not moving enough
+    fullSet, iter: 0 i: 244, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 291, pairs changed 47
+    fullSet, iter: 0 i: 245, pairs changed 31
+    j not moving enough
+    fullSet, iter: 0 i: 246, pairs changed 31
+    fullSet, iter: 0 i: 247, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 292, pairs changed 47
+    fullSet, iter: 0 i: 248, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 293, pairs changed 47
-    fullSet, iter: 0 i: 294, pairs changed 47
-    fullSet, iter: 0 i: 295, pairs changed 47
+    fullSet, iter: 0 i: 249, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 296, pairs changed 47
-    fullSet, iter: 0 i: 297, pairs changed 47
+    fullSet, iter: 0 i: 250, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 298, pairs changed 47
-    fullSet, iter: 0 i: 299, pairs changed 47
-    fullSet, iter: 0 i: 300, pairs changed 47
+    fullSet, iter: 0 i: 251, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 301, pairs changed 47
+    fullSet, iter: 0 i: 252, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 302, pairs changed 47
+    fullSet, iter: 0 i: 253, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 303, pairs changed 47
+    fullSet, iter: 0 i: 254, pairs changed 31
+    fullSet, iter: 0 i: 255, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 304, pairs changed 47
+    fullSet, iter: 0 i: 256, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 305, pairs changed 47
+    fullSet, iter: 0 i: 257, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 306, pairs changed 47
+    fullSet, iter: 0 i: 258, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 307, pairs changed 47
-    fullSet, iter: 0 i: 308, pairs changed 47
-    fullSet, iter: 0 i: 309, pairs changed 47
+    fullSet, iter: 0 i: 259, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 310, pairs changed 47
+    fullSet, iter: 0 i: 260, pairs changed 31
+    fullSet, iter: 0 i: 261, pairs changed 31
+    fullSet, iter: 0 i: 262, pairs changed 31
+    fullSet, iter: 0 i: 263, pairs changed 31
+    fullSet, iter: 0 i: 264, pairs changed 31
+    fullSet, iter: 0 i: 265, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 311, pairs changed 47
-    fullSet, iter: 0 i: 312, pairs changed 47
-    fullSet, iter: 0 i: 313, pairs changed 47
-    fullSet, iter: 0 i: 314, pairs changed 47
-    fullSet, iter: 0 i: 315, pairs changed 47
+    fullSet, iter: 0 i: 266, pairs changed 31
+    fullSet, iter: 0 i: 267, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 316, pairs changed 47
+    fullSet, iter: 0 i: 268, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 317, pairs changed 47
+    fullSet, iter: 0 i: 269, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 318, pairs changed 47
+    fullSet, iter: 0 i: 270, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 319, pairs changed 47
-    fullSet, iter: 0 i: 320, pairs changed 48
+    fullSet, iter: 0 i: 271, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 321, pairs changed 48
+    fullSet, iter: 0 i: 272, pairs changed 31
+    fullSet, iter: 0 i: 273, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 322, pairs changed 48
+    fullSet, iter: 0 i: 274, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 323, pairs changed 48
+    fullSet, iter: 0 i: 275, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 324, pairs changed 48
+    fullSet, iter: 0 i: 276, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 325, pairs changed 48
+    fullSet, iter: 0 i: 277, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 326, pairs changed 48
+    fullSet, iter: 0 i: 278, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 327, pairs changed 48
+    fullSet, iter: 0 i: 279, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 328, pairs changed 48
+    fullSet, iter: 0 i: 280, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 329, pairs changed 48
+    fullSet, iter: 0 i: 281, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 330, pairs changed 48
+    fullSet, iter: 0 i: 282, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 331, pairs changed 48
+    fullSet, iter: 0 i: 283, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 332, pairs changed 48
+    fullSet, iter: 0 i: 284, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 333, pairs changed 48
+    fullSet, iter: 0 i: 285, pairs changed 31
+    fullSet, iter: 0 i: 286, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 334, pairs changed 48
+    fullSet, iter: 0 i: 287, pairs changed 31
+    fullSet, iter: 0 i: 288, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 335, pairs changed 48
+    fullSet, iter: 0 i: 289, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 336, pairs changed 48
+    fullSet, iter: 0 i: 290, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 337, pairs changed 48
+    fullSet, iter: 0 i: 291, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 338, pairs changed 48
+    fullSet, iter: 0 i: 292, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 339, pairs changed 48
+    fullSet, iter: 0 i: 293, pairs changed 31
+    fullSet, iter: 0 i: 294, pairs changed 31
+    fullSet, iter: 0 i: 295, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 340, pairs changed 48
+    fullSet, iter: 0 i: 296, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 341, pairs changed 48
+    fullSet, iter: 0 i: 297, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 342, pairs changed 48
+    fullSet, iter: 0 i: 298, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 343, pairs changed 48
+    fullSet, iter: 0 i: 299, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 344, pairs changed 48
+    fullSet, iter: 0 i: 300, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 345, pairs changed 48
+    fullSet, iter: 0 i: 301, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 346, pairs changed 48
-    fullSet, iter: 0 i: 347, pairs changed 48
+    fullSet, iter: 0 i: 302, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 348, pairs changed 48
+    fullSet, iter: 0 i: 303, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 349, pairs changed 48
+    fullSet, iter: 0 i: 304, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 350, pairs changed 48
+    fullSet, iter: 0 i: 305, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 351, pairs changed 48
+    fullSet, iter: 0 i: 306, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 352, pairs changed 48
+    fullSet, iter: 0 i: 307, pairs changed 31
+    fullSet, iter: 0 i: 308, pairs changed 31
+    fullSet, iter: 0 i: 309, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 353, pairs changed 48
+    fullSet, iter: 0 i: 310, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 354, pairs changed 48
-    fullSet, iter: 0 i: 355, pairs changed 48
+    fullSet, iter: 0 i: 311, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 356, pairs changed 48
+    fullSet, iter: 0 i: 312, pairs changed 31
+    fullSet, iter: 0 i: 313, pairs changed 31
+    fullSet, iter: 0 i: 314, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 357, pairs changed 48
+    fullSet, iter: 0 i: 315, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 358, pairs changed 48
+    fullSet, iter: 0 i: 316, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 359, pairs changed 48
-    fullSet, iter: 0 i: 360, pairs changed 48
+    fullSet, iter: 0 i: 317, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 361, pairs changed 48
+    fullSet, iter: 0 i: 318, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 362, pairs changed 48
+    fullSet, iter: 0 i: 319, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 363, pairs changed 48
+    fullSet, iter: 0 i: 320, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 364, pairs changed 48
+    fullSet, iter: 0 i: 321, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 365, pairs changed 48
+    fullSet, iter: 0 i: 322, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 366, pairs changed 48
+    fullSet, iter: 0 i: 323, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 367, pairs changed 48
+    fullSet, iter: 0 i: 324, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 368, pairs changed 48
+    fullSet, iter: 0 i: 325, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 369, pairs changed 48
+    fullSet, iter: 0 i: 326, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 370, pairs changed 48
+    fullSet, iter: 0 i: 327, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 371, pairs changed 48
+    fullSet, iter: 0 i: 328, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 372, pairs changed 48
+    fullSet, iter: 0 i: 329, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 373, pairs changed 48
+    fullSet, iter: 0 i: 330, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 374, pairs changed 48
+    fullSet, iter: 0 i: 331, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 375, pairs changed 48
+    fullSet, iter: 0 i: 332, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 376, pairs changed 48
+    fullSet, iter: 0 i: 333, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 377, pairs changed 48
+    fullSet, iter: 0 i: 334, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 378, pairs changed 48
+    fullSet, iter: 0 i: 335, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 379, pairs changed 48
+    fullSet, iter: 0 i: 336, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 380, pairs changed 48
+    fullSet, iter: 0 i: 337, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 381, pairs changed 48
+    fullSet, iter: 0 i: 338, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 382, pairs changed 48
+    fullSet, iter: 0 i: 339, pairs changed 31
+    fullSet, iter: 0 i: 340, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 383, pairs changed 48
+    fullSet, iter: 0 i: 341, pairs changed 31
+    fullSet, iter: 0 i: 342, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 384, pairs changed 48
+    fullSet, iter: 0 i: 343, pairs changed 31
+    fullSet, iter: 0 i: 344, pairs changed 31
+    fullSet, iter: 0 i: 345, pairs changed 31
+    fullSet, iter: 0 i: 346, pairs changed 31
+    fullSet, iter: 0 i: 347, pairs changed 31
+    fullSet, iter: 0 i: 348, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 385, pairs changed 48
+    fullSet, iter: 0 i: 349, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 386, pairs changed 48
+    fullSet, iter: 0 i: 350, pairs changed 31
+    fullSet, iter: 0 i: 351, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 387, pairs changed 48
+    fullSet, iter: 0 i: 352, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 388, pairs changed 48
+    fullSet, iter: 0 i: 353, pairs changed 31
+    fullSet, iter: 0 i: 354, pairs changed 31
+    fullSet, iter: 0 i: 355, pairs changed 31
+    fullSet, iter: 0 i: 356, pairs changed 31
+    fullSet, iter: 0 i: 357, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 389, pairs changed 48
+    fullSet, iter: 0 i: 358, pairs changed 31
+    fullSet, iter: 0 i: 359, pairs changed 31
+    fullSet, iter: 0 i: 360, pairs changed 31
+    fullSet, iter: 0 i: 361, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 390, pairs changed 48
+    fullSet, iter: 0 i: 362, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 391, pairs changed 48
+    fullSet, iter: 0 i: 363, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 392, pairs changed 48
+    fullSet, iter: 0 i: 364, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 393, pairs changed 48
+    fullSet, iter: 0 i: 365, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 394, pairs changed 48
+    fullSet, iter: 0 i: 366, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 395, pairs changed 48
+    fullSet, iter: 0 i: 367, pairs changed 31
+    fullSet, iter: 0 i: 368, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 396, pairs changed 48
+    fullSet, iter: 0 i: 369, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 397, pairs changed 48
+    fullSet, iter: 0 i: 370, pairs changed 31
+    fullSet, iter: 0 i: 371, pairs changed 31
+    fullSet, iter: 0 i: 372, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 398, pairs changed 48
+    fullSet, iter: 0 i: 373, pairs changed 31
+    fullSet, iter: 0 i: 374, pairs changed 31
+    fullSet, iter: 0 i: 375, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 399, pairs changed 48
+    fullSet, iter: 0 i: 376, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 400, pairs changed 48
+    fullSet, iter: 0 i: 377, pairs changed 31
+    fullSet, iter: 0 i: 378, pairs changed 31
+    fullSet, iter: 0 i: 379, pairs changed 31
     L == H
-    fullSet, iter: 0 i: 401, pairs changed 48
+    fullSet, iter: 0 i: 380, pairs changed 31
+    fullSet, iter: 0 i: 381, pairs changed 31
+    fullSet, iter: 0 i: 382, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 383, pairs changed 31
+    fullSet, iter: 0 i: 384, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 385, pairs changed 31
+    fullSet, iter: 0 i: 386, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 387, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 388, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 389, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 390, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 391, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 392, pairs changed 31
+    fullSet, iter: 0 i: 393, pairs changed 31
+    fullSet, iter: 0 i: 394, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 395, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 396, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 397, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 398, pairs changed 31
+    L == H
+    fullSet, iter: 0 i: 399, pairs changed 31
+    fullSet, iter: 0 i: 400, pairs changed 31
+    fullSet, iter: 0 i: 401, pairs changed 32
     iteration number: 1
     non-bound, iter: 1 i: 1, pairs changed 1
     non-bound, iter: 1 i: 3, pairs changed 2
+    non-bound, iter: 1 i: 5, pairs changed 3
+    non-bound, iter: 1 i: 7, pairs changed 4
+    non-bound, iter: 1 i: 13, pairs changed 5
+    non-bound, iter: 1 i: 14, pairs changed 6
+    non-bound, iter: 1 i: 16, pairs changed 7
+    non-bound, iter: 1 i: 19, pairs changed 8
     j not moving enough
-    non-bound, iter: 1 i: 5, pairs changed 2
-    non-bound, iter: 1 i: 7, pairs changed 3
-    non-bound, iter: 1 i: 13, pairs changed 4
-    non-bound, iter: 1 i: 14, pairs changed 5
-    non-bound, iter: 1 i: 21, pairs changed 6
+    non-bound, iter: 1 i: 20, pairs changed 8
     j not moving enough
-    non-bound, iter: 1 i: 24, pairs changed 6
-    j not moving enough
-    non-bound, iter: 1 i: 25, pairs changed 6
-    j not moving enough
-    non-bound, iter: 1 i: 42, pairs changed 6
-    non-bound, iter: 1 i: 47, pairs changed 7
-    non-bound, iter: 1 i: 49, pairs changed 8
+    non-bound, iter: 1 i: 21, pairs changed 8
     j not moving enough
     non-bound, iter: 1 i: 63, pairs changed 8
-    non-bound, iter: 1 i: 65, pairs changed 9
     j not moving enough
-    non-bound, iter: 1 i: 66, pairs changed 9
+    non-bound, iter: 1 i: 85, pairs changed 8
+    non-bound, iter: 1 i: 87, pairs changed 9
+    non-bound, iter: 1 i: 105, pairs changed 10
+    non-bound, iter: 1 i: 117, pairs changed 11
+    non-bound, iter: 1 i: 125, pairs changed 12
+    non-bound, iter: 1 i: 127, pairs changed 13
+    non-bound, iter: 1 i: 130, pairs changed 14
+    non-bound, iter: 1 i: 162, pairs changed 15
+    non-bound, iter: 1 i: 172, pairs changed 16
+    non-bound, iter: 1 i: 198, pairs changed 17
+    non-bound, iter: 1 i: 199, pairs changed 18
+    non-bound, iter: 1 i: 200, pairs changed 19
+    non-bound, iter: 1 i: 203, pairs changed 20
+    non-bound, iter: 1 i: 204, pairs changed 21
+    non-bound, iter: 1 i: 205, pairs changed 22
     j not moving enough
-    non-bound, iter: 1 i: 77, pairs changed 9
+    non-bound, iter: 1 i: 207, pairs changed 22
     j not moving enough
-    non-bound, iter: 1 i: 81, pairs changed 9
+    non-bound, iter: 1 i: 208, pairs changed 22
     j not moving enough
-    non-bound, iter: 1 i: 85, pairs changed 9
+    non-bound, iter: 1 i: 209, pairs changed 22
     j not moving enough
-    non-bound, iter: 1 i: 105, pairs changed 9
+    non-bound, iter: 1 i: 210, pairs changed 22
     j not moving enough
-    non-bound, iter: 1 i: 127, pairs changed 9
+    non-bound, iter: 1 i: 211, pairs changed 22
+    non-bound, iter: 1 i: 215, pairs changed 23
     j not moving enough
-    non-bound, iter: 1 i: 198, pairs changed 9
+    non-bound, iter: 1 i: 218, pairs changed 23
     j not moving enough
-    non-bound, iter: 1 i: 199, pairs changed 9
+    non-bound, iter: 1 i: 222, pairs changed 23
     j not moving enough
-    non-bound, iter: 1 i: 200, pairs changed 9
+    non-bound, iter: 1 i: 233, pairs changed 23
     j not moving enough
-    non-bound, iter: 1 i: 201, pairs changed 9
+    non-bound, iter: 1 i: 235, pairs changed 23
     j not moving enough
-    non-bound, iter: 1 i: 203, pairs changed 9
+    non-bound, iter: 1 i: 317, pairs changed 23
     j not moving enough
-    non-bound, iter: 1 i: 204, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 205, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 207, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 208, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 210, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 211, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 215, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 216, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 225, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 233, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 234, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 235, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 236, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 238, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 242, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 245, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 249, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 284, pairs changed 9
-    j not moving enough
-    non-bound, iter: 1 i: 317, pairs changed 9
+    non-bound, iter: 1 i: 401, pairs changed 23
     iteration number: 2
+    j not moving enough
     non-bound, iter: 2 i: 1, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 3, pairs changed 0
@@ -6964,32 +4645,32 @@ testDigits(('rbf', 20))
     j not moving enough
     non-bound, iter: 2 i: 14, pairs changed 0
     j not moving enough
+    non-bound, iter: 2 i: 16, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 20, pairs changed 0
+    j not moving enough
     non-bound, iter: 2 i: 21, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 24, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 25, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 42, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 47, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 49, pairs changed 0
-    j not moving enough
     non-bound, iter: 2 i: 63, pairs changed 0
-    non-bound, iter: 2 i: 65, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 66, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 77, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 81, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 85, pairs changed 0
     j not moving enough
+    non-bound, iter: 2 i: 87, pairs changed 0
+    j not moving enough
     non-bound, iter: 2 i: 105, pairs changed 0
+    non-bound, iter: 2 i: 117, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 125, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 127, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 130, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 162, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 172, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 185, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 198, pairs changed 0
     j not moving enough
@@ -6997,11 +4678,7 @@ testDigits(('rbf', 20))
     j not moving enough
     non-bound, iter: 2 i: 200, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 201, pairs changed 0
-    j not moving enough
     non-bound, iter: 2 i: 203, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 204, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 205, pairs changed 0
     j not moving enough
@@ -7009,33 +4686,28 @@ testDigits(('rbf', 20))
     j not moving enough
     non-bound, iter: 2 i: 208, pairs changed 0
     j not moving enough
+    non-bound, iter: 2 i: 209, pairs changed 0
+    j not moving enough
     non-bound, iter: 2 i: 210, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 211, pairs changed 0
-    j not moving enough
     non-bound, iter: 2 i: 215, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 216, pairs changed 0
+    non-bound, iter: 2 i: 218, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 225, pairs changed 0
+    non-bound, iter: 2 i: 222, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 233, pairs changed 0
     j not moving enough
-    non-bound, iter: 2 i: 234, pairs changed 0
-    j not moving enough
     non-bound, iter: 2 i: 235, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 236, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 238, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 242, pairs changed 0
-    j not moving enough
-    non-bound, iter: 2 i: 245, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 249, pairs changed 0
     j not moving enough
+    non-bound, iter: 2 i: 254, pairs changed 0
+    j not moving enough
     non-bound, iter: 2 i: 284, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 287, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 305, pairs changed 0
     j not moving enough
@@ -7043,13 +4715,24 @@ testDigits(('rbf', 20))
     j not moving enough
     non-bound, iter: 2 i: 317, pairs changed 0
     j not moving enough
+    non-bound, iter: 2 i: 319, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 322, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 323, pairs changed 0
+    j not moving enough
     non-bound, iter: 2 i: 330, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 332, pairs changed 0
     j not moving enough
     non-bound, iter: 2 i: 337, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 343, pairs changed 0
+    j not moving enough
+    non-bound, iter: 2 i: 401, pairs changed 0
     iteration number: 3
     fullSet, iter: 3 i: 0, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 1, pairs changed 0
     fullSet, iter: 3 i: 2, pairs changed 0
     j not moving enough
@@ -7060,12 +4743,9 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 6, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 7, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 8, pairs changed 0
     fullSet, iter: 3 i: 9, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 10, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 11, pairs changed 0
     L == H
     fullSet, iter: 3 i: 12, pairs changed 0
@@ -7075,9 +4755,8 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 14, pairs changed 0
     L == H
     fullSet, iter: 3 i: 15, pairs changed 0
-    L == H
-    fullSet, iter: 3 i: 16, pairs changed 0
     j not moving enough
+    fullSet, iter: 3 i: 16, pairs changed 0
     fullSet, iter: 3 i: 17, pairs changed 0
     L == H
     fullSet, iter: 3 i: 18, pairs changed 0
@@ -7086,27 +4765,19 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 20, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 21, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 22, pairs changed 0
     L == H
     fullSet, iter: 3 i: 23, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 24, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 25, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 26, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 27, pairs changed 0
     fullSet, iter: 3 i: 28, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 29, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 30, pairs changed 0
     fullSet, iter: 3 i: 31, pairs changed 0
     fullSet, iter: 3 i: 32, pairs changed 0
     fullSet, iter: 3 i: 33, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 34, pairs changed 0
     fullSet, iter: 3 i: 35, pairs changed 0
     fullSet, iter: 3 i: 36, pairs changed 0
@@ -7114,61 +4785,47 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 38, pairs changed 0
     L == H
     fullSet, iter: 3 i: 39, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 40, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 41, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 42, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 43, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 44, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 45, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 46, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 47, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 48, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 49, pairs changed 0
     fullSet, iter: 3 i: 50, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 51, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 52, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 53, pairs changed 0
     L == H
     fullSet, iter: 3 i: 54, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 55, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 56, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 57, pairs changed 0
     fullSet, iter: 3 i: 58, pairs changed 0
     fullSet, iter: 3 i: 59, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 60, pairs changed 0
     fullSet, iter: 3 i: 61, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 62, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 63, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 64, pairs changed 0
     fullSet, iter: 3 i: 65, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 66, pairs changed 0
     fullSet, iter: 3 i: 67, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 68, pairs changed 0
     fullSet, iter: 3 i: 69, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 70, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 71, pairs changed 0
     L == H
     fullSet, iter: 3 i: 72, pairs changed 0
@@ -7177,47 +4834,34 @@ testDigits(('rbf', 20))
     L == H
     fullSet, iter: 3 i: 75, pairs changed 0
     fullSet, iter: 3 i: 76, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 77, pairs changed 0
     fullSet, iter: 3 i: 78, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 79, pairs changed 0
     fullSet, iter: 3 i: 80, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 81, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 82, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 83, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 84, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 85, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 86, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 87, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 88, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 89, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 90, pairs changed 0
     fullSet, iter: 3 i: 91, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 92, pairs changed 0
     fullSet, iter: 3 i: 93, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 94, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 95, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 96, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 97, pairs changed 0
     L == H
     fullSet, iter: 3 i: 98, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 99, pairs changed 0
     fullSet, iter: 3 i: 100, pairs changed 0
     L == H
@@ -7227,144 +4871,107 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 104, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 105, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 106, pairs changed 0
     fullSet, iter: 3 i: 107, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 108, pairs changed 0
     fullSet, iter: 3 i: 109, pairs changed 0
     fullSet, iter: 3 i: 110, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 111, pairs changed 0
     fullSet, iter: 3 i: 112, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 113, pairs changed 0
     fullSet, iter: 3 i: 114, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 115, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 116, pairs changed 0
     L == H
+    fullSet, iter: 3 i: 115, pairs changed 0
+    fullSet, iter: 3 i: 116, pairs changed 0
     fullSet, iter: 3 i: 117, pairs changed 0
     fullSet, iter: 3 i: 118, pairs changed 0
     L == H
     fullSet, iter: 3 i: 119, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 120, pairs changed 0
     fullSet, iter: 3 i: 121, pairs changed 0
     fullSet, iter: 3 i: 122, pairs changed 0
     L == H
     fullSet, iter: 3 i: 123, pairs changed 0
-    L == H
     fullSet, iter: 3 i: 124, pairs changed 0
-    L == H
-    fullSet, iter: 3 i: 125, pairs changed 0
     j not moving enough
+    fullSet, iter: 3 i: 125, pairs changed 0
     fullSet, iter: 3 i: 126, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 127, pairs changed 0
-    L == H
     fullSet, iter: 3 i: 128, pairs changed 0
     L == H
     fullSet, iter: 3 i: 129, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 130, pairs changed 0
     L == H
     fullSet, iter: 3 i: 131, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 132, pairs changed 0
     fullSet, iter: 3 i: 133, pairs changed 0
     fullSet, iter: 3 i: 134, pairs changed 0
     fullSet, iter: 3 i: 135, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 136, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 137, pairs changed 0
     fullSet, iter: 3 i: 138, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 139, pairs changed 0
     fullSet, iter: 3 i: 140, pairs changed 0
     fullSet, iter: 3 i: 141, pairs changed 0
     fullSet, iter: 3 i: 142, pairs changed 0
     fullSet, iter: 3 i: 143, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 144, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 145, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 146, pairs changed 0
     fullSet, iter: 3 i: 147, pairs changed 0
     fullSet, iter: 3 i: 148, pairs changed 0
     fullSet, iter: 3 i: 149, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 150, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 151, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 152, pairs changed 0
     fullSet, iter: 3 i: 153, pairs changed 0
     fullSet, iter: 3 i: 154, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 155, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 156, pairs changed 0
-    L == H
     fullSet, iter: 3 i: 157, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 158, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 159, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 160, pairs changed 0
-    L == H
     fullSet, iter: 3 i: 161, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 162, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 163, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 164, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 165, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 166, pairs changed 0
     fullSet, iter: 3 i: 167, pairs changed 0
     fullSet, iter: 3 i: 168, pairs changed 0
     fullSet, iter: 3 i: 169, pairs changed 0
     fullSet, iter: 3 i: 170, pairs changed 0
     fullSet, iter: 3 i: 171, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 172, pairs changed 0
     L == H
     fullSet, iter: 3 i: 173, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 174, pairs changed 0
     fullSet, iter: 3 i: 175, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 176, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 177, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 178, pairs changed 0
     L == H
     fullSet, iter: 3 i: 179, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 180, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 181, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 182, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 183, pairs changed 0
-    j not moving enough
-    fullSet, iter: 3 i: 184, pairs changed 0
     L == H
+    fullSet, iter: 3 i: 182, pairs changed 0
+    L == H
+    fullSet, iter: 3 i: 183, pairs changed 0
+    fullSet, iter: 3 i: 184, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 185, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 186, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 187, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 188, pairs changed 0
     L == H
     fullSet, iter: 3 i: 189, pairs changed 0
@@ -7373,7 +4980,6 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 192, pairs changed 0
     fullSet, iter: 3 i: 193, pairs changed 0
     fullSet, iter: 3 i: 194, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 195, pairs changed 0
     fullSet, iter: 3 i: 196, pairs changed 0
     fullSet, iter: 3 i: 197, pairs changed 0
@@ -7383,7 +4989,6 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 199, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 200, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 201, pairs changed 0
     fullSet, iter: 3 i: 202, pairs changed 0
     j not moving enough
@@ -7397,6 +5002,7 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 207, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 208, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 209, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 210, pairs changed 0
@@ -7405,19 +5011,18 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 212, pairs changed 0
     fullSet, iter: 3 i: 213, pairs changed 0
     fullSet, iter: 3 i: 214, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 215, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 216, pairs changed 0
     fullSet, iter: 3 i: 217, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 218, pairs changed 0
     fullSet, iter: 3 i: 219, pairs changed 0
     fullSet, iter: 3 i: 220, pairs changed 0
     fullSet, iter: 3 i: 221, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 222, pairs changed 0
     fullSet, iter: 3 i: 223, pairs changed 0
     fullSet, iter: 3 i: 224, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 225, pairs changed 0
     fullSet, iter: 3 i: 226, pairs changed 0
     fullSet, iter: 3 i: 227, pairs changed 0
@@ -7425,150 +5030,211 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 229, pairs changed 0
     fullSet, iter: 3 i: 230, pairs changed 0
     fullSet, iter: 3 i: 231, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 232, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 233, pairs changed 0
-    j not moving enough
     fullSet, iter: 3 i: 234, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 235, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 236, pairs changed 0
     fullSet, iter: 3 i: 237, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 238, pairs changed 0
     fullSet, iter: 3 i: 239, pairs changed 0
     fullSet, iter: 3 i: 240, pairs changed 0
     fullSet, iter: 3 i: 241, pairs changed 0
-    j not moving enough
+    L == H
     fullSet, iter: 3 i: 242, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 243, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 244, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 245, pairs changed 0
     fullSet, iter: 3 i: 246, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 247, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 248, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 249, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 250, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 251, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 252, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 253, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 254, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 255, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 256, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 257, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 258, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 259, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 260, pairs changed 0
     fullSet, iter: 3 i: 261, pairs changed 0
     fullSet, iter: 3 i: 262, pairs changed 0
     fullSet, iter: 3 i: 263, pairs changed 0
     fullSet, iter: 3 i: 264, pairs changed 0
     fullSet, iter: 3 i: 265, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 266, pairs changed 0
     fullSet, iter: 3 i: 267, pairs changed 0
     fullSet, iter: 3 i: 268, pairs changed 0
     fullSet, iter: 3 i: 269, pairs changed 0
     fullSet, iter: 3 i: 270, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 271, pairs changed 0
     fullSet, iter: 3 i: 272, pairs changed 0
     fullSet, iter: 3 i: 273, pairs changed 0
     fullSet, iter: 3 i: 274, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 275, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 276, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 277, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 278, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 279, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 280, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 281, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 282, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 283, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 284, pairs changed 0
     fullSet, iter: 3 i: 285, pairs changed 0
     fullSet, iter: 3 i: 286, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 287, pairs changed 0
     fullSet, iter: 3 i: 288, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 289, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 290, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 291, pairs changed 0
     fullSet, iter: 3 i: 292, pairs changed 0
     L == H
     fullSet, iter: 3 i: 293, pairs changed 0
     fullSet, iter: 3 i: 294, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 295, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 296, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 297, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 298, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 299, pairs changed 0
     fullSet, iter: 3 i: 300, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 301, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 302, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 303, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 304, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 305, pairs changed 0
     L == H
     fullSet, iter: 3 i: 306, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 307, pairs changed 0
     fullSet, iter: 3 i: 308, pairs changed 0
     fullSet, iter: 3 i: 309, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 310, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 311, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 312, pairs changed 0
     fullSet, iter: 3 i: 313, pairs changed 0
     fullSet, iter: 3 i: 314, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 315, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 316, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 317, pairs changed 0
     L == H
     fullSet, iter: 3 i: 318, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 319, pairs changed 0
     fullSet, iter: 3 i: 320, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 321, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 322, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 323, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 324, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 325, pairs changed 0
     fullSet, iter: 3 i: 326, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 327, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 328, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 329, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 330, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 331, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 332, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 333, pairs changed 0
     L == H
     fullSet, iter: 3 i: 334, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 335, pairs changed 0
     fullSet, iter: 3 i: 336, pairs changed 0
     j not moving enough
     fullSet, iter: 3 i: 337, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 338, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 339, pairs changed 0
     fullSet, iter: 3 i: 340, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 341, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 342, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 343, pairs changed 0
     fullSet, iter: 3 i: 344, pairs changed 0
     fullSet, iter: 3 i: 345, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 346, pairs changed 0
     fullSet, iter: 3 i: 347, pairs changed 0
     fullSet, iter: 3 i: 348, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 349, pairs changed 0
     fullSet, iter: 3 i: 350, pairs changed 0
     fullSet, iter: 3 i: 351, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 352, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 353, pairs changed 0
     fullSet, iter: 3 i: 354, pairs changed 0
     fullSet, iter: 3 i: 355, pairs changed 0
@@ -7578,50 +5244,75 @@ testDigits(('rbf', 20))
     fullSet, iter: 3 i: 359, pairs changed 0
     fullSet, iter: 3 i: 360, pairs changed 0
     fullSet, iter: 3 i: 361, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 362, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 363, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 364, pairs changed 0
     fullSet, iter: 3 i: 365, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 366, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 367, pairs changed 0
     fullSet, iter: 3 i: 368, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 369, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 370, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 371, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 372, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 373, pairs changed 0
     fullSet, iter: 3 i: 374, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 375, pairs changed 0
     fullSet, iter: 3 i: 376, pairs changed 0
     fullSet, iter: 3 i: 377, pairs changed 0
     fullSet, iter: 3 i: 378, pairs changed 0
     fullSet, iter: 3 i: 379, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 380, pairs changed 0
     fullSet, iter: 3 i: 381, pairs changed 0
     fullSet, iter: 3 i: 382, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 383, pairs changed 0
     fullSet, iter: 3 i: 384, pairs changed 0
     fullSet, iter: 3 i: 385, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 386, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 387, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 388, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 389, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 390, pairs changed 0
     fullSet, iter: 3 i: 391, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 392, pairs changed 0
     fullSet, iter: 3 i: 393, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 394, pairs changed 0
+    j not moving enough
     fullSet, iter: 3 i: 395, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 396, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 397, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 398, pairs changed 0
+    L == H
     fullSet, iter: 3 i: 399, pairs changed 0
     fullSet, iter: 3 i: 400, pairs changed 0
-    L == H
+    j not moving enough
     fullSet, iter: 3 i: 401, pairs changed 0
     iteration number: 4
-    there are 49 Support Vectors
-    the training error rate is 0.004975
+    there are 50 Support Vectors
+    the training error rate is 0.000000
     the test error rate is 0.016129
     
 
