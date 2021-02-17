@@ -1,4 +1,4 @@
-from numpy import *
+﻿from numpy import *
 from os import listdir
 
 def loadDataSet(filename):
@@ -236,3 +236,6 @@ def testDigits(kTup = ('rbf', 10)):
         if sign(predict) != sign(labelArr[i]):
             errorCount += 1
     print('the test error rate is %f' % (float(errorCount) / m))
+
+#testRbf()
+#testDigits(('rbf', 20))

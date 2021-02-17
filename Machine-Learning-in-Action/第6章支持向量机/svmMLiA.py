@@ -1,4 +1,4 @@
-from numpy import *
+﻿from numpy import *
 
 def loadDataSet(filename):
     dataMat = []
@@ -198,3 +198,25 @@ def calcWs(alphas, dataArr, classLabels):
     for i in range(m):
         w += alphas[i] * labelMat[i] * array([X[i, :]]).T
     return w
+
+#dataArr, labelArr = loadDataSet('testSet.txt')
+#print(labelArr)
+#b, alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
+#print(b)
+#print(alphas[alphas > 0])
+#print(shape(alphas[alphas > 0]))
+#for i in range(100):
+#    if alphas[i] > 0.0:
+#        print(dataArr[i], labelArr[i])
+
+#dataArr, labelArr = loadDataSet('testSet.txt')
+#b, alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
+#ws = calcWs(alphas, dataArr, labelArr)
+#print(ws)
+#dataMat = mat(dataArr)
+#print(dataMat[0] * mat(ws) + b)
+#print(labelArr[0])
+#print(dataMat[2] * mat(ws) + b)
+#print(labelArr[2])
+#print(dataMat[1] * mat(ws) + b)
+#print(labelArr[1])
