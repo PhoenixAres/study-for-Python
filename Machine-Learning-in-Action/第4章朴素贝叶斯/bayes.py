@@ -110,3 +110,34 @@ def spamTest():
             errorCount += 1
             print('classification error ', docList[docIndex])
     print('the error rate is: ', float(errorCount) / len(testSet))
+
+#listOPosts, listClasses = loadDataSet()
+#myVocabList = createVocabList(listOPosts)
+#print(myVocabList)
+#print(setOfWords2Vec(myVocabList, listOPosts[0]))
+#print(setOfWords2Vec(myVocabList, listOPosts[3]))
+
+#listOPosts, listClasses = loadDataSet()
+#myVocabList = createVocabList(listOPosts)
+#trainMat = []
+#for postinDoc in listOPosts:
+#    trainMat.append(setOfWords2Vec(myVocabList, postinDoc))
+#p0V, p1V, pAb = trainNB0(trainMat, listClasses)
+#print(pAb)
+#print(p0V)
+#print(p1V)
+
+#testingNB()
+
+#mySent = 'This book is the best book on Python or M.L. I have ever laid eyes upon.'
+#print(mySent.split())
+#regEx = re.compile('\\W+')
+#listOfTokens = regEx.split(mySent)
+#print(listOfTokens)
+#print([tok.lower() for tok in listOfTokens if len(tok) > 0])
+#with open('email/ham/6.txt') as fp:
+#    emailText = fp.read()
+#    listOfTokens = regEx.split(emailText)
+#    print(listOfTokens)
+
+#spamTest()
