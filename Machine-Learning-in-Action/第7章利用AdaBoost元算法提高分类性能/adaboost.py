@@ -32,7 +32,7 @@ def buildStump(dataArr, classLabels, D):
                 predictedVals = stumpClassify(dataMatrix, i, threshVal, inequal)
                 errArr = ones((m, 1))
                 errArr[predictedVals == labelMat] = 0
-                weightedError = dot(D.T, errArr)
+                weightedError = dot(D.T, errArr)        #计算加权错误率
                 print('split: dim %d, thresh %.2f, thresh inequal: %s, the weighted error is %.3f' \
                        % (i, threshVal, inequal, weightedError))
                 if weightedError < minError:
@@ -57,11 +57,11 @@ def adaBoostTrainDS(dataArr, classLabels, numIt = 40):
         print('classEst:', classEst.T)
         expon = classEst * (-1 * alpha * array(classLabels))
         D = D * exp(expon)
-        D = D / D.sum()
+        D = D / D.sum()                                        #为下一次迭代计算D
         aggClassEst += alpha * classEst
         print('aggClassEst:', aggClassEst.T)
         aggErrors = ones((m, 1)) * (sign(aggClassEst) != array(classLabels))
-        errorRate = aggErrors.sum() / m
+        errorRate = aggErrors.sum() / m                        #错误率累加计算
         print('total error:', errorRate)
         if errorRate == 0.0:
             break
@@ -97,7 +97,7 @@ def plotROC(predStrengths, classLabels):
     numPosClas = sum(array(classLabels) == 1.0)
     yStep = 1 / float(numPosClas)
     xStep = 1 / float(len(classLabels) - numPosClas)
-    sortedIndicies = predStrengths.argsort()
+    sortedIndicies = predStrengths.argsort()           #获取排好序的索引
     fig = plt.figure()
     fig.clf()
     ax = plt.subplot(111)
@@ -119,3 +119,25 @@ def plotROC(predStrengths, classLabels):
     plt.show()
     print('the Area Under the Curve is: ', ySum * xStep)
 
+#datMat, classLabels = loadSimpData()
+#D = ones((5, 1)) / 5
+#print(buildStump(datMat, classLabels, D))
+
+#classifierArray = adaBoostTrainDS(datMat, classLabels, 9)
+#print(classifierArray)
+
+#datArr, labelArr = loadSimpData()
+#classifierArr = adaBoostTrainDS(datArr, labelArr, 30)
+#print(adaClassify([[0, 0]], classifierArr))
+#print(adaClassify([[5, 5], [0, 0]], classifierArr))
+
+#dataArr, labelArr = loadDataSet('horseColicTraining2.txt')
+#classifierArray = adaBoostTrainDS(dataArr, labelArr, 10)
+#testArr, testLabelArr = loadDataSet('horseColicTest2.txt')
+#prediction10 = adaClassify(testArr, classifierArray)
+#errArr = ones((67, 1))
+#print(errArr[prediction10 != array(testLabelArr)].sum())
+
+#dataArr, labelArr = loadDataSet('horseColicTraining2.txt')
+#classifierArray, aggClassEst = adaBoostTrainDS(dataArr, labelArr, 10)
+#plotROC(aggClassEst.T, labelArr)
