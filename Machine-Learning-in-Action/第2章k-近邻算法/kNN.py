@@ -68,3 +68,31 @@ def classifyPerson():
     inArr = array([ffMiles, percentTats, iceCream])
     classifierResult = classify0((inArr-minVals)/ranges, normMat, datingLabels, 3)
     print('you will probably like this person: ', resultList[classifierResult - 1])
+
+#group, labels = createDataSet()
+#print(group)
+#print(labels)
+#print(classify0([0, 0], group, labels, 3))
+
+#datingDataMat, datingLabels = file2matrix('datingTestSet.txt')
+#print(datingDataMat)
+#print(datingLabels[0:20])
+
+#fig = plt.figure()
+#ax = fig.add_subplot(111)
+#ax.scatter(datingDataMat[:, 1], datingDataMat[:, 2])
+#plt.show()
+
+#fig = plt.figure()
+#ax = fig.add_subplot(111)
+#ax.scatter(datingDataMat[:, 1], datingDataMat[:, 2], 15.0*array(datingLabels), 15.0*array(datingLabels))
+#plt.show()
+
+#normMat, ranges, minVals = autoNorm(datingDataMat)
+#print(normMat)
+#print(ranges)
+#print(minVals)
+
+#datingClassTest()
+
+#classifyPerson()
