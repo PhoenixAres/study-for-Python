@@ -80,7 +80,16 @@ def createPlot(inTree):
     plotTree(inTree, (0.5, 1.0), '')
     plt.show()
 
+#createPlot()
 
+#print(retrieveTree(1))
+#myTree = retrieveTree(0)
+#print(getNumLeafs(myTree))
+#print(getTreeDepth(myTree))
 
-
+#myTree = retrieveTree(0)
+#createPlot(myTree)
+#myTree['no surfacing'][3] = 'maybe'
+#print(myTree)
+#createPlot(myTree)
 

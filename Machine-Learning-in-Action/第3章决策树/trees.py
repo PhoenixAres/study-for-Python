@@ -95,10 +95,41 @@ def grabTree(filename):
     with open(filename, 'rb') as fr:
         return pickle.load(fr)
 
+#myDat, labels = createDataSet()
+#print(myDat)
+#print(calcShannonEnt(myDat))
+#myDat[0][-1] = 'maybe'
+#print(myDat)
+#print(calcShannonEnt(myDat))
+
+#myDat, labels = createDataSet()
+#print(myDat)
+#print(splitDataSet(myDat, 0, 1))
+#print(splitDataSet(myDat, 0, 0))
+
+#myDat, labels = createDataSet()
+#print(chooseBestFeatureToSplit(myDat))
+#print(myDat)
+
+#myDat, labels = createDataSet()
+#myTree = createTree(myDat, labels)
+#print(myTree)
+
+#myDat, labels = createDataSet()
+#print(labels)
+#myTree = retrieveTree(0)
+#print(myTree)
+#print(classify(myTree, labels, [1, 0]))
+#print(classify(myTree, labels, [1, 1]))
+
+#storeTree(myTree, 'classifierStorage.txt')
+#print(grabTree('classifierStorage.txt'))
+
 with open('lenses.txt') as fr:
     lenses = [inst.strip().split('\t') for inst in fr.readlines()]
     lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
     lensesTree = createTree(lenses, lensesLabels)
     print(lensesTree)
     createPlot(lensesTree)
+
 
