@@ -1,4 +1,4 @@
-from numpy import *
+﻿from numpy import *
 import matplotlib.pyplot as plt
 
 def loadDataSet():
@@ -114,3 +114,19 @@ def multiTest():
     for k in range(numTests):
         errorSum += colicTest()
     print('after %d iterations the average error rate is: %f' % (numTests, errorSum / float(numTests)))
+
+
+#dataArr, labelMat = loadDataSet()
+#print(gradAscent(dataArr, labelMat))
+#weights = gradAscent(dataArr, labelMat)
+#plotBestFit(weights)
+
+#dataArr, labelMat = loadDataSet()
+#weights = stocGradAscent0(array(dataArr), labelMat)
+#plotBestFit(weights)
+
+#dataArr, labelMat = loadDataSet()
+#weights = stocGradAscent1(array(dataArr), labelMat)
+#plotBestFit(weights)
+
+#multiTest()
