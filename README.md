@@ -1,4 +1,4 @@
-# study-for-Python
+﻿# pythonPractise
 
 本项目配合中国大学MOOC课程：实用Python程序设计
 
